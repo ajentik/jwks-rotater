@@ -5,6 +5,14 @@
 **Status**: Draft
 **Input**: User description: "Kubernetes operator that manages JWKS key rotation across deployments, with CRD-based configuration, automatic key generation, configurable old key retention and cleanup, and deployment restart support"
 
+## Clarifications
+
+### Session 2026-04-10
+
+- Q: Should the JWKS Secret contain only public keys (verification) or private+public key pairs (signing)? → A: Private+public key pairs for signing, with the operator also deriving a separate public-only JWKS for verifiers.
+- Q: What level of operational visibility should the operator provide? → A: CR status + standard operator metrics (rotation count, key age, errors, reconciliation latency) + Kubernetes Events emitted on rotation, cleanup, and errors.
+- Q: How should the JWKS be stored within the Kubernetes Secret? → A: Single data key `jwks.json` in each Secret. Public Secret is automatically named `<target-secret-name>-public`.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Declare JWKS Rotation for a Service (Priority: P1)
@@ -96,7 +104,7 @@ A cluster-wide JWKSRotationPolicy resource allows platform teams to define a def
 ### Functional Requirements
 
 - **FR-001**: System MUST provide a JWKSRotation custom resource definition that accepts key type, key size, rotation interval, retention period, target Secret reference, and optional target Deployment references.
-- **FR-002**: System MUST generate cryptographic keys (RSA and ECDSA) and store them in standard JWKS format in a Kubernetes Secret.
+- **FR-002**: System MUST generate cryptographic key pairs (RSA and ECDSA), store the private+public JWKS in a Kubernetes Secret, and derive a separate public-only JWKS Secret for use by token verifiers.
 - **FR-003**: System MUST assign a unique key ID (`kid`) to each generated key.
 - **FR-004**: System MUST embed a creation timestamp in each key's metadata to support retention calculations.
 - **FR-005**: System MUST automatically rotate keys at the configured interval by generating a new key and appending it to the JWKS.
@@ -107,12 +115,17 @@ A cluster-wide JWKSRotationPolicy resource allows platform teams to define a def
 - **FR-010**: System MUST provide a JWKSRotationPolicy CRD for cluster-wide auto-discovery of Deployments via label selectors.
 - **FR-011**: System MUST use leader election to ensure only one operator instance performs rotations at a time.
 - **FR-012**: System MUST recreate the target Secret if it is deleted externally.
+- **FR-013**: System MUST expose operator metrics including rotation event count, active key age, error count, and reconciliation latency.
+- **FR-014**: System MUST emit Kubernetes Events on the JWKSRotation resource for key rotation, key cleanup, rotation failures, and Secret recreation.
+- **FR-015**: System MUST store the JWKS under the data key `jwks.json` within each Secret.
+- **FR-016**: System MUST automatically create a public-only Secret named `<target-secret-name>-public` alongside the private Secret, kept in sync on every rotation and cleanup.
 
 ### Key Entities
 
 - **JWKSRotation**: A namespace-scoped custom resource that declares the desired rotation configuration for a single JWKS Secret. Attributes include key type, key size, rotation interval, retention period, target Secret name, and optional target Deployments.
 - **JWKSRotationPolicy**: A cluster-scoped custom resource that applies default rotation configuration to Deployments matching a label selector.
-- **JWKS Secret**: A Kubernetes Secret containing the JSON Web Key Set. Each key in the set includes a `kid`, key material, and creation metadata.
+- **JWKS Private Secret**: A Kubernetes Secret containing the full JSON Web Key Set with private+public key pairs under the data key `jwks.json`. Used by signing services. Named as specified in the CR's `targetSecret.name`. Each key includes a `kid`, full key material, and creation metadata.
+- **JWKS Public Secret**: A derived Kubernetes Secret containing only the public keys under the data key `jwks.json`. Used by token verifiers. Named `<target-secret-name>-public`. Automatically kept in sync with the private Secret.
 
 ## Success Criteria *(mandatory)*
 

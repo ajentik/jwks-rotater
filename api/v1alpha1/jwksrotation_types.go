@@ -54,9 +54,8 @@ type JWKSRotationSpec struct {
 	KeyType KeyType `json:"keyType,omitempty"`
 
 	// keySize is the key size in bits. RSA: 2048 or 4096. ECDSA: 256 (P-256) or 384 (P-384).
-	// Defaults to 2048.
+	// Defaults to 2048 for RSA and 256 for ECDSA when omitted.
 	// +optional
-	// +kubebuilder:default=2048
 	KeySize int `json:"keySize,omitempty"`
 
 	// rotationInterval specifies how often to generate a new key (e.g., "24h", "168h").
@@ -104,8 +103,20 @@ type JWKSRotationStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
+// DefaultKeySize returns the default key size for the given key type.
+func DefaultKeySize(kt KeyType) int {
+	if kt == ECDSA {
+		return 256
+	}
+	return 2048
+}
+
 // Validate checks that the spec fields are consistent.
+// It applies default keySize when omitted (0).
 func (s *JWKSRotationSpec) Validate() error {
+	if s.KeySize == 0 {
+		s.KeySize = DefaultKeySize(s.KeyType)
+	}
 	switch s.KeyType {
 	case RSA:
 		if s.KeySize != 2048 && s.KeySize != 4096 {

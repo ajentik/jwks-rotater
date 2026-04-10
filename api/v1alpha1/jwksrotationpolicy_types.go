@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -31,9 +33,9 @@ type JWKSRotationPolicySpec struct {
 	// +kubebuilder:default=RSA
 	KeyType KeyType `json:"keyType,omitempty"`
 
-	// keySize is the default key size in bits. Defaults to 2048.
+	// keySize is the default key size in bits.
+	// Defaults to 2048 for RSA and 256 for ECDSA when omitted.
 	// +optional
-	// +kubebuilder:default=2048
 	KeySize int `json:"keySize,omitempty"`
 
 	// rotationInterval is the default rotation interval for matched Deployments.
@@ -44,6 +46,28 @@ type JWKSRotationPolicySpec struct {
 	// Must be greater than rotationInterval.
 	// +required
 	RetentionPeriod metav1.Duration `json:"retentionPeriod"`
+}
+
+// Validate checks that the policy spec fields are consistent.
+// It applies default keySize when omitted (0).
+func (s *JWKSRotationPolicySpec) Validate() error {
+	if s.KeySize == 0 {
+		s.KeySize = DefaultKeySize(s.KeyType)
+	}
+	switch s.KeyType {
+	case RSA:
+		if s.KeySize != 2048 && s.KeySize != 4096 {
+			return fmt.Errorf("invalid key size %d for RSA", s.KeySize)
+		}
+	case ECDSA:
+		if s.KeySize != 256 && s.KeySize != 384 {
+			return fmt.Errorf("invalid key size %d for ECDSA", s.KeySize)
+		}
+	}
+	if s.RetentionPeriod.Duration <= s.RotationInterval.Duration {
+		return fmt.Errorf("retentionPeriod must be greater than rotationInterval")
+	}
+	return nil
 }
 
 // JWKSRotationPolicyStatus defines the observed state of JWKSRotationPolicy.

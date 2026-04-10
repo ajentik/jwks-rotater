@@ -104,6 +104,7 @@ func (r *JWKSRotationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	needsWrite := false
+	rotated := false
 
 	// Initial key generation (no keys yet)
 	if ks.Len() == 0 {
@@ -111,17 +112,26 @@ func (r *JWKSRotationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return r.setErrorCondition(ctx, &rotation, fmt.Sprintf("generating initial key: %v", err))
 		}
 		needsWrite = true
+		rotated = true
 		log.Info("generated initial key", "secretName", secretName)
 	}
 
-	// Rotation check
+	// Rotation check — derive effective last rotation from status or keystore
+	var effectiveLastRotation time.Time
 	if rotation.Status.LastRotation != nil {
-		nextRotation := rotation.Status.LastRotation.Add(rotation.Spec.RotationInterval.Duration)
+		effectiveLastRotation = rotation.Status.LastRotation.Time
+	} else if newest := ks.NewestKey(); newest != nil {
+		effectiveLastRotation = newest.CreatedAt
+	}
+
+	if !effectiveLastRotation.IsZero() {
+		nextRotation := effectiveLastRotation.Add(rotation.Spec.RotationInterval.Duration)
 		if now.After(nextRotation) {
 			if err := r.addNewKey(ks, &rotation); err != nil {
 				return r.setErrorCondition(ctx, &rotation, fmt.Sprintf("rotating key: %v", err))
 			}
 			needsWrite = true
+			rotated = true
 			log.Info("rotated key", "secretName", secretName)
 			r.recordEvent(&rotation, corev1.EventTypeNormal, "KeyRotated", "New key generated and appended to JWKS")
 			rotationTotal.WithLabelValues(rotation.Namespace, rotation.Name).Inc()
@@ -144,15 +154,33 @@ func (r *JWKSRotationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// Write secrets if anything changed
 	if needsWrite {
 		if err := r.writeSecrets(ctx, &rotation, ks, secretName); err != nil {
+			rotationErrorsTotal.WithLabelValues(rotation.Namespace, rotation.Name).Inc()
 			return ctrl.Result{}, fmt.Errorf("writing secrets: %w", err)
 		}
 	}
 
-	// Update status
-	nowMeta := metav1.NewTime(now)
-	nextRotation := metav1.NewTime(now.Add(rotation.Spec.RotationInterval.Duration))
-	rotation.Status.LastRotation = &nowMeta
-	rotation.Status.NextRotation = &nextRotation
+	// Update status — only update LastRotation when a key was actually generated
+	if rotated {
+		nowMeta := metav1.NewTime(now)
+		rotation.Status.LastRotation = &nowMeta
+	}
+
+	// Compute next rotation from the effective last rotation time
+	var requeueAfter time.Duration
+	if rotation.Status.LastRotation != nil {
+		next := rotation.Status.LastRotation.Add(rotation.Spec.RotationInterval.Duration)
+		nextMeta := metav1.NewTime(next)
+		rotation.Status.NextRotation = &nextMeta
+		until := next.Sub(now)
+		if until > 0 {
+			requeueAfter = until
+		} else {
+			requeueAfter = rotation.Spec.RotationInterval.Duration
+		}
+	} else {
+		requeueAfter = rotation.Spec.RotationInterval.Duration
+	}
+
 	rotation.Status.ActiveKeys = ks.Len()
 
 	setCondition(&rotation, "Ready", metav1.ConditionTrue, "ReconcileSuccessful",
@@ -165,15 +193,6 @@ func (r *JWKSRotationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	if err := r.Status().Update(ctx, &rotation); err != nil {
 		return ctrl.Result{}, fmt.Errorf("updating status: %w", err)
-	}
-
-	// Requeue at next rotation time
-	requeueAfter := rotation.Spec.RotationInterval.Duration
-	if rotation.Status.LastRotation != nil {
-		until := rotation.Status.LastRotation.Time.Add(rotation.Spec.RotationInterval.Duration).Sub(now)
-		if until > 0 {
-			requeueAfter = until
-		}
 	}
 
 	return ctrl.Result{RequeueAfter: requeueAfter}, nil
@@ -303,6 +322,7 @@ func (r *JWKSRotationReconciler) restartDeployments(ctx context.Context, rotatio
 }
 
 func (r *JWKSRotationReconciler) setErrorCondition(ctx context.Context, rotation *jwksv1alpha1.JWKSRotation, message string) (ctrl.Result, error) { //nolint:unparam
+	rotationErrorsTotal.WithLabelValues(rotation.Namespace, rotation.Name).Inc()
 	setCondition(rotation, "Error", metav1.ConditionTrue, "ValidationFailed", message)
 	clearCondition(rotation, "Ready")
 	r.recordEvent(rotation, corev1.EventTypeWarning, "InvalidConfig", message)

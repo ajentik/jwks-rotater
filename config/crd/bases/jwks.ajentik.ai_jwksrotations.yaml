@@ -56,10 +56,9 @@ spec:
             description: JWKSRotationSpec defines the desired state of JWKSRotation.
             properties:
               keySize:
-                default: 2048
                 description: |-
                   keySize is the key size in bits. RSA: 2048 or 4096. ECDSA: 256 (P-256) or 384 (P-384).
-                  Defaults to 2048.
+                  Defaults to 2048 for RSA and 256 for ECDSA when omitted.
                 type: integer
               keyType:
                 default: RSA

@@ -56,11 +56,6 @@ type jwksJSON struct {
 	Keys []json.RawMessage `json:"keys"`
 }
 
-type jwkWithIAT struct {
-	jose.JSONWebKey
-	IAT int64 `json:"iat"`
-}
-
 // MarshalJSON serializes the keystore to a JWKS JSON document with iat fields.
 func (ks *KeyStore) MarshalJSON() ([]byte, error) {
 	var rawKeys []json.RawMessage

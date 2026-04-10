@@ -50,7 +50,7 @@ func TestKeyStore_AddAndSerialize(t *testing.T) {
 func TestKeyStore_MultipleKeys(t *testing.T) {
 	ks := NewKeyStore()
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		k, err := GenerateKey("RSA", 2048)
 		if err != nil {
 			t.Fatal(err)
@@ -105,11 +105,11 @@ func TestKeyStore_PublicOnly(t *testing.T) {
 
 func TestKeyStore_RemoveExpired(t *testing.T) {
 	tests := []struct {
-		name           string
-		keyAges        []time.Duration
-		retention      time.Duration
-		wantRemaining  int
-		wantRemoved    int
+		name          string
+		keyAges       []time.Duration
+		retention     time.Duration
+		wantRemaining int
+		wantRemoved   int
 	}{
 		{
 			name:          "no expired keys",

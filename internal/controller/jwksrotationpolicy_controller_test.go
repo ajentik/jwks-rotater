@@ -18,6 +18,7 @@ package controller
 
 import (
 	"fmt"
+	"maps"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -56,9 +57,7 @@ var _ = Describe("JWKSRotationPolicy Controller", func() {
 
 	createDeployment := func(name, namespace string, extraLabels map[string]string) *appsv1.Deployment {
 		allLabels := map[string]string{"app": name}
-		for k, v := range extraLabels {
-			allLabels[k] = v
-		}
+		maps.Copy(allLabels, extraLabels)
 		dep := &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,

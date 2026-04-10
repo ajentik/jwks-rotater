@@ -12,6 +12,7 @@
 - Q: Should the JWKS Secret contain only public keys (verification) or private+public key pairs (signing)? → A: Private+public key pairs for signing, with the operator also deriving a separate public-only JWKS for verifiers.
 - Q: What level of operational visibility should the operator provide? → A: CR status + standard operator metrics (rotation count, key age, errors, reconciliation latency) + Kubernetes Events emitted on rotation, cleanup, and errors.
 - Q: How should the JWKS be stored within the Kubernetes Secret? → A: Single data key `jwks.json` in each Secret. Public Secret is automatically named `<target-secret-name>-public`.
+- Q: What happens to Secrets when a JWKSRotation CR is deleted? → A: Clean up both private and public Secrets by default via finalizer. Opt-out with `spec.retainSecretsOnDelete: true` to leave Secrets in place.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -98,12 +99,13 @@ A cluster-wide JWKSRotationPolicy resource allows platform teams to define a def
 - What happens when two JWKSRotation CRs target the same Secret? The operator should reject the second CR with a conflict status condition.
 - What happens when the operator loses leader election during a rotation? The new leader should detect the incomplete state and complete or retry the rotation.
 - What happens when the cluster clock skews? Rotation and retention calculations should use the key's embedded creation timestamp, not wall clock comparisons alone.
+- What happens when a JWKSRotation CR is deleted? The operator uses a finalizer to delete both Secrets by default. If `retainSecretsOnDelete` is true, Secrets are left in place as orphans.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: System MUST provide a JWKSRotation custom resource definition that accepts key type, key size, rotation interval, retention period, target Secret reference, and optional target Deployment references.
+- **FR-001**: System MUST provide a JWKSRotation custom resource definition that accepts key type, key size, rotation interval, retention period, target Secret reference, optional target Deployment references, and an optional `retainSecretsOnDelete` flag (default: false).
 - **FR-002**: System MUST generate cryptographic key pairs (RSA and ECDSA), store the private+public JWKS in a Kubernetes Secret, and derive a separate public-only JWKS Secret for use by token verifiers.
 - **FR-003**: System MUST assign a unique key ID (`kid`) to each generated key.
 - **FR-004**: System MUST embed a creation timestamp in each key's metadata to support retention calculations.
@@ -119,6 +121,7 @@ A cluster-wide JWKSRotationPolicy resource allows platform teams to define a def
 - **FR-014**: System MUST emit Kubernetes Events on the JWKSRotation resource for key rotation, key cleanup, rotation failures, and Secret recreation.
 - **FR-015**: System MUST store the JWKS under the data key `jwks.json` within each Secret.
 - **FR-016**: System MUST automatically create a public-only Secret named `<target-secret-name>-public` alongside the private Secret, kept in sync on every rotation and cleanup.
+- **FR-017**: System MUST use a finalizer to delete both private and public Secrets when a JWKSRotation CR is deleted, unless `retainSecretsOnDelete` is set to true.
 
 ### Key Entities
 

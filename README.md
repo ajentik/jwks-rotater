@@ -15,7 +15,7 @@ A Kubernetes operator that automates JSON Web Key Set (JWKS) lifecycle managemen
 
 ## Prerequisites
 
-- Go 1.22+
+- Go 1.25+
 - Docker 17.03+
 - kubectl v1.28+
 - Access to a Kubernetes v1.28+ cluster

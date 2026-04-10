@@ -78,8 +78,11 @@ func (r *JWKSRotationPolicyReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return ctrl.Result{}, fmt.Errorf("listing deployments: %w", err)
 	}
 
-	// Build a set of secret names targeted by explicit JWKSRotation CRs (fix N+1)
-	explicitSecrets := r.buildExplicitSecretSet(ctx, deployments.Items)
+	// Build a set of secret names targeted by explicit JWKSRotation CRs
+	explicitSecrets, err := r.buildExplicitSecretSet(ctx, deployments.Items)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	managedSecrets := 0
 	now := time.Now().UTC()
@@ -156,7 +159,7 @@ func (r *JWKSRotationPolicyReconciler) Reconcile(ctx context.Context, req ctrl.R
 	return ctrl.Result{RequeueAfter: policy.Spec.RotationInterval.Duration}, nil
 }
 
-func (r *JWKSRotationPolicyReconciler) buildExplicitSecretSet(ctx context.Context, deployments []appsv1.Deployment) map[types.NamespacedName]bool {
+func (r *JWKSRotationPolicyReconciler) buildExplicitSecretSet(ctx context.Context, deployments []appsv1.Deployment) (map[types.NamespacedName]bool, error) {
 	result := make(map[types.NamespacedName]bool)
 	namespaces := make(map[string]bool)
 	for _, dep := range deployments {
@@ -165,13 +168,13 @@ func (r *JWKSRotationPolicyReconciler) buildExplicitSecretSet(ctx context.Contex
 	for ns := range namespaces {
 		var rotations jwksv1alpha1.JWKSRotationList
 		if err := r.List(ctx, &rotations, &client.ListOptions{Namespace: ns}); err != nil {
-			continue
+			return nil, fmt.Errorf("listing JWKSRotations in namespace %s: %w", ns, err)
 		}
 		for _, rot := range rotations.Items {
 			result[types.NamespacedName{Name: rot.Spec.TargetSecret.Name, Namespace: ns}] = true
 		}
 	}
-	return result
+	return result, nil
 }
 
 func (r *JWKSRotationPolicyReconciler) loadKeyStore(ctx context.Context, namespace, secretName string) (*jwks.KeyStore, error) {
@@ -191,7 +194,7 @@ func (r *JWKSRotationPolicyReconciler) loadKeyStore(ctx context.Context, namespa
 }
 
 func (r *JWKSRotationPolicyReconciler) writeSecrets(ctx context.Context, policy *jwksv1alpha1.JWKSRotationPolicy, namespace, secretName string, ks *jwks.KeyStore) error {
-	owner := metav1.OwnerReference{
+	owner := &metav1.OwnerReference{
 		APIVersion: policy.APIVersion,
 		Kind:       policy.Kind,
 		Name:       policy.Name,

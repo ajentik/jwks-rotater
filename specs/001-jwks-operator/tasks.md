@@ -19,7 +19,7 @@
 
 **Purpose**: Project initialization and kubebuilder scaffolding
 
-- [ ] T001 Initialize kubebuilder project with `kubebuilder init --domain yanok.io --repo github.com/yanok/jwks-rotater`
+- [ ] T001 Initialize kubebuilder project with `kubebuilder init --domain ajentik.ai --repo github.com/yanok/jwks-rotater`
 - [ ] T002 Scaffold JWKSRotation API with `kubebuilder create api --group jwks --version v1alpha1 --kind JWKSRotation --resource --controller`
 - [ ] T003 Scaffold JWKSRotationPolicy API with `kubebuilder create api --group jwks --version v1alpha1 --kind JWKSRotationPolicy --resource --controller`
 - [ ] T004 Add go-jose/v4 dependency with `go get github.com/go-jose/go-jose/v4`
@@ -180,7 +180,7 @@
 
 ### Implementation
 
-- [ ] T056 Implement finalizer `jwks.yanok.io/secret-cleanup`: add on CR creation, handle on deletion in `internal/controller/jwksrotation_controller.go`
+- [ ] T056 Implement finalizer `jwks.ajentik.ai/secret-cleanup`: add on CR creation, handle on deletion in `internal/controller/jwksrotation_controller.go`
 - [ ] T057 Implement Secret recreation: detect missing Secret, regenerate key, emit SecretRecreated event in `internal/controller/jwksrotation_controller.go`
 
 **Checkpoint**: Full lifecycle — create, rotate, cleanup, delete, recreate

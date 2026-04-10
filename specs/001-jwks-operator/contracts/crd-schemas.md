@@ -3,7 +3,7 @@
 ## JWKSRotation CR — Example
 
 ```yaml
-apiVersion: jwks.yanok.io/v1alpha1
+apiVersion: jwks.ajentik.ai/v1alpha1
 kind: JWKSRotation
 metadata:
   name: auth-service-jwks
@@ -46,8 +46,8 @@ metadata:
   name: auth-jwks
   namespace: payments
   labels:
-    jwks.yanok.io/managed-by: jwks-operator
-    jwks.yanok.io/rotation: auth-service-jwks
+    jwks.ajentik.ai/managed-by: jwks-operator
+    jwks.ajentik.ai/rotation: auth-service-jwks
 type: Opaque
 data:
   jwks.json: <base64-encoded JWKS with private keys>
@@ -61,8 +61,8 @@ metadata:
   name: auth-jwks-public
   namespace: payments
   labels:
-    jwks.yanok.io/managed-by: jwks-operator
-    jwks.yanok.io/rotation: auth-service-jwks
+    jwks.ajentik.ai/managed-by: jwks-operator
+    jwks.ajentik.ai/rotation: auth-service-jwks
 type: Opaque
 data:
   jwks.json: <base64-encoded JWKS with public keys only>
@@ -71,14 +71,14 @@ data:
 ## JWKSRotationPolicy CR — Example
 
 ```yaml
-apiVersion: jwks.yanok.io/v1alpha1
+apiVersion: jwks.ajentik.ai/v1alpha1
 kind: JWKSRotationPolicy
 metadata:
   name: default-rotation
 spec:
   selector:
     matchLabels:
-      jwks.yanok.io/rotate: "true"
+      jwks.ajentik.ai/rotate: "true"
   keyType: RSA
   keySize: 2048
   rotationInterval: 24h
@@ -95,7 +95,7 @@ metadata:
   name: my-service
   namespace: default
   labels:
-    jwks.yanok.io/rotate: "true"
+    jwks.ajentik.ai/rotate: "true"
 ```
 
 Results in Secrets:
@@ -108,10 +108,10 @@ The operator ServiceAccount requires:
 
 ```yaml
 rules:
-  - apiGroups: ["jwks.yanok.io"]
+  - apiGroups: ["jwks.ajentik.ai"]
     resources: ["jwksrotations", "jwksrotations/status", "jwksrotations/finalizers"]
     verbs: ["get", "list", "watch", "update", "patch"]
-  - apiGroups: ["jwks.yanok.io"]
+  - apiGroups: ["jwks.ajentik.ai"]
     resources: ["jwksrotationpolicies", "jwksrotationpolicies/status"]
     verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: [""]

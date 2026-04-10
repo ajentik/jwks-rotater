@@ -2,7 +2,7 @@
 
 ## JWKSRotation (namespace-scoped CRD)
 
-**API Group**: `jwks.yanok.io/v1alpha1`
+**API Group**: `jwks.ajentik.ai/v1alpha1`
 **Kind**: `JWKSRotation`
 
 ### Spec Fields
@@ -59,7 +59,7 @@ CR Created → Initial key generated → Secret created → Status: Ready
 
 ## JWKSRotationPolicy (cluster-scoped CRD)
 
-**API Group**: `jwks.yanok.io/v1alpha1`
+**API Group**: `jwks.ajentik.ai/v1alpha1`
 **Kind**: `JWKSRotationPolicy`
 
 ### Spec Fields

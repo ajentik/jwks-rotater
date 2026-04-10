@@ -11,7 +11,7 @@
 
 ```bash
 # Initialize kubebuilder project
-kubebuilder init --domain yanok.io --repo github.com/yanok/jwks-rotater
+kubebuilder init --domain ajentik.ai --repo github.com/yanok/jwks-rotater
 
 # Create the JWKSRotation API (namespace-scoped)
 kubebuilder create api --group jwks --version v1alpha1 --kind JWKSRotation --resource --controller

@@ -34,7 +34,7 @@
 
 ## R-005: Finalizer Strategy for Secret Cleanup
 
-**Decision**: Add a finalizer `jwks.yanok.io/secret-cleanup` to JWKSRotation resources
+**Decision**: Add a finalizer `jwks.ajentik.ai/secret-cleanup` to JWKSRotation resources
 **Rationale**: Standard Kubernetes pattern for cleanup on deletion. The finalizer handler checks `retainSecretsOnDelete`; if false, deletes both private and public Secrets before removing the finalizer.
 **Alternatives considered**:
 - Owner references only: Would auto-delete Secrets when CR is deleted, but doesn't support the `retainSecretsOnDelete` opt-out.

@@ -88,7 +88,7 @@ A cluster-wide JWKSRotationPolicy resource allows platform teams to define a def
 
 **Acceptance Scenarios**:
 
-1. **Given** a JWKSRotationPolicy selecting Deployments with label `jwks.yanok.io/rotate: "true"`, **When** a Deployment with that label exists, **Then** the operator creates a Secret named `<deployment-name>-jwks` in the same namespace with a valid JWKS.
+1. **Given** a JWKSRotationPolicy selecting Deployments with label `jwks.ajentik.ai/rotate: "true"`, **When** a Deployment with that label exists, **Then** the operator creates a Secret named `<deployment-name>-jwks` in the same namespace with a valid JWKS.
 2. **Given** a Deployment that matches a JWKSRotationPolicy and also has a dedicated JWKSRotation CR, **When** the operator reconciles, **Then** the explicit JWKSRotation CR takes precedence over the policy defaults.
 
 ---

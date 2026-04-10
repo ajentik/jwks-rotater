@@ -50,7 +50,7 @@ type JWKSRotationReconciler struct {
 // EventRecorder provides the ability to record events. Optional — nil-safe.
 type EventRecorder interface {
 	Event(object runtime.Object, eventtype, reason, message string)
-	Eventf(object runtime.Object, eventtype, reason, messageFmt string, args ...interface{})
+	Eventf(object runtime.Object, eventtype, reason, messageFmt string, args ...any)
 }
 
 // +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotations,verbs=get;list;watch;create;update;patch;delete
@@ -116,7 +116,7 @@ func (r *JWKSRotationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// Rotation check
 	if rotation.Status.LastRotation != nil {
-		nextRotation := rotation.Status.LastRotation.Time.Add(rotation.Spec.RotationInterval.Duration)
+		nextRotation := rotation.Status.LastRotation.Add(rotation.Spec.RotationInterval.Duration)
 		if now.After(nextRotation) {
 			if err := r.addNewKey(ks, &rotation); err != nil {
 				return r.setErrorCondition(ctx, &rotation, fmt.Sprintf("rotating key: %v", err))
@@ -247,7 +247,7 @@ func (r *JWKSRotationReconciler) writeSecrets(ctx context.Context, rotation *jwk
 	return nil
 }
 
-func (r *JWKSRotationReconciler) handleDeletion(ctx context.Context, rotation *jwksv1alpha1.JWKSRotation) (ctrl.Result, error) {
+func (r *JWKSRotationReconciler) handleDeletion(ctx context.Context, rotation *jwksv1alpha1.JWKSRotation) (ctrl.Result, error) { //nolint:unparam
 	if !controllerutil.ContainsFinalizer(rotation, finalizerName) {
 		return ctrl.Result{}, nil
 	}
@@ -302,7 +302,7 @@ func (r *JWKSRotationReconciler) restartDeployments(ctx context.Context, rotatio
 	}
 }
 
-func (r *JWKSRotationReconciler) setErrorCondition(ctx context.Context, rotation *jwksv1alpha1.JWKSRotation, message string) (ctrl.Result, error) {
+func (r *JWKSRotationReconciler) setErrorCondition(ctx context.Context, rotation *jwksv1alpha1.JWKSRotation, message string) (ctrl.Result, error) { //nolint:unparam
 	setCondition(rotation, "Error", metav1.ConditionTrue, "ValidationFailed", message)
 	clearCondition(rotation, "Ready")
 	r.recordEvent(rotation, corev1.EventTypeWarning, "InvalidConfig", message)

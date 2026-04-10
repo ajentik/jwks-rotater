@@ -5,7 +5,7 @@
 
 ## Summary
 
-A Kubernetes operator that manages automatic JWKS key rotation. The operator watches JWKSRotation custom resources, generates RSA/ECDSA key pairs using go-jose/v4, stores them as Kubernetes Secrets (private + derived public), rotates on schedule via controller-runtime's RequeueAfter, cleans up expired keys after a retention period, and optionally restarts target Deployments. A cluster-scoped JWKSRotationPolicy CRD enables auto-discovery of Deployments via label selectors.
+A Kubernetes operator that manages automatic JWKS key rotation. The operator watches JWKSRotation custom resources, generates RSA/ECDSA key pairs using go-jose/v4, stores them as Kubernetes Secrets (private + derived public), rotates on schedule via controller-runtime's RequeueAfter, cleans up expired keys after a retention period, and optionally restarts target Deployments. A cluster-scoped JWKSRotationPolicy CRD enables auto-discovery of Deployments via label selectors. API group: `jwks.ajentik.ai`.
 
 ## Technical Context
 

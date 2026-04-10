@@ -4,7 +4,7 @@
 
 - Go 1.22+
 - Docker (for building container images)
-- kubectl with access to a Kubernetes 1.27+ cluster
+- kubectl with access to a Kubernetes 1.28+ cluster
 - kubebuilder v4 (for scaffolding and code generation)
 
 ## Bootstrap the Project

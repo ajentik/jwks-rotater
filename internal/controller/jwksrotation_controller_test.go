@@ -40,9 +40,9 @@ var _ = Describe("JWKSRotation Controller", func() {
 	)
 
 	var (
-		ns       string
-		nsCount  int
-		crName   string
+		ns         string
+		nsCount    int
+		crName     string
 		secretName string
 	)
 

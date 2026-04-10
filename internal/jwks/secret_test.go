@@ -24,7 +24,7 @@ func TestBuildSecrets(t *testing.T) {
 		UID:        types.UID("test-uid"),
 	}
 
-	privSecret, pubSecret, err := BuildSecrets(ks, "my-ns", "auth-jwks", owner)
+	privSecret, pubSecret, err := BuildSecrets(ks, "my-ns", "auth-jwks", &owner)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestBuildSecrets_Labels(t *testing.T) {
 		UID:        types.UID("uid-123"),
 	}
 
-	priv, pub, err := BuildSecrets(ks, "default", "test-secret", owner)
+	priv, pub, err := BuildSecrets(ks, "default", "test-secret", &owner)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -188,12 +188,11 @@ func (ks *KeyStore) NewestKey() *ManagedKey {
 			newest = e
 		}
 	}
-	privKey, ok := newest.jwk.Key.(crypto.PrivateKey)
-	if !ok {
+	if newest.jwk.IsPublic() {
 		return nil
 	}
 	return &ManagedKey{
-		Key:       privKey,
+		Key:       newest.jwk.Key.(crypto.PrivateKey),
 		KeyID:     newest.jwk.KeyID,
 		CreatedAt: newest.iat,
 	}

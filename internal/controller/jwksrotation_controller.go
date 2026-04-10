@@ -50,8 +50,7 @@ type JWKSRotationReconciler struct {
 
 // EventRecorder provides the ability to record events. Optional — nil-safe.
 type EventRecorder interface {
-	Event(object runtime.Object, eventtype, reason, message string)
-	Eventf(object runtime.Object, eventtype, reason, messageFmt string, args ...any)
+	Eventf(regarding runtime.Object, related runtime.Object, eventtype, reason, action, note string, args ...any)
 }
 
 // +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotations,verbs=get;list;watch;create;update;patch;delete
@@ -187,6 +186,7 @@ func (r *JWKSRotationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	setCondition(&rotation, "Ready", metav1.ConditionTrue, "ReconcileSuccessful",
 		fmt.Sprintf("JWKS contains %d active keys", ks.Len()))
 	clearCondition(&rotation, "Error")
+	clearCondition(&rotation, "Degraded")
 
 	// Update metrics
 	activeKeys.WithLabelValues(rotation.Namespace, rotation.Name).Set(float64(ks.Len()))
@@ -231,13 +231,16 @@ func (r *JWKSRotationReconciler) loadOrCreateKeyStore(ctx context.Context, rotat
 }
 
 func (r *JWKSRotationReconciler) writeSecrets(ctx context.Context, rotation *jwksv1alpha1.JWKSRotation, ks *jwks.KeyStore, secretName string) error {
-	owner := metav1.OwnerReference{
-		APIVersion:         rotation.APIVersion,
-		Kind:               rotation.Kind,
-		Name:               rotation.Name,
-		UID:                rotation.UID,
-		Controller:         boolPtr(true),
-		BlockOwnerDeletion: boolPtr(true),
+	var owner *metav1.OwnerReference
+	if !rotation.Spec.RetainSecretsOnDelete {
+		owner = &metav1.OwnerReference{
+			APIVersion:         rotation.APIVersion,
+			Kind:               rotation.Kind,
+			Name:               rotation.Name,
+			UID:                rotation.UID,
+			Controller:         boolPtr(true),
+			BlockOwnerDeletion: boolPtr(true),
+		}
 	}
 
 	privSecret, pubSecret, err := jwks.BuildSecrets(ks, rotation.Namespace, secretName, owner)
@@ -343,7 +346,7 @@ func (r *JWKSRotationReconciler) setErrorCondition(ctx context.Context, rotation
 
 func (r *JWKSRotationReconciler) recordEvent(obj runtime.Object, eventtype, reason, message string) {
 	if r.Recorder != nil {
-		r.Recorder.Event(obj, eventtype, reason, message)
+		r.Recorder.Eventf(obj, nil, eventtype, reason, reason, message)
 	}
 }
 

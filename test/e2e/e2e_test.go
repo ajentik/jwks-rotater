@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -224,13 +223,13 @@ var _ = Describe("Manager", Ordered, func() {
 			By("creating the curl-metrics pod to access the metrics endpoint")
 			cmd = exec.Command("kubectl", "run", "curl-metrics", "--restart=Never",
 				"--namespace", namespace,
-				"--image=curlimages/curl:latest",
+				"--image=curlimages/curl:8.7.1",
 				"--overrides",
 				fmt.Sprintf(`{
 					"spec": {
 						"containers": [{
 							"name": "curl",
-							"image": "curlimages/curl:latest",
+							"image": "curlimages/curl:8.7.1",
 							"command": ["/bin/sh", "-c"],
 							"args": [
 								"for i in $(seq 1 30); do curl -v -k -H 'Authorization: Bearer %s' https://%s.%s.svc.cluster.local:8443/metrics && exit 0 || sleep 2; done; exit 1"
@@ -298,13 +297,17 @@ func serviceAccountToken() (string, error) {
 		"kind": "TokenRequest"
 	}`
 
-	// Temporary file to store the token request
-	secretName := fmt.Sprintf("%s-token-request", serviceAccountName)
-	tokenRequestFile := filepath.Join("/tmp", secretName)
-	err := os.WriteFile(tokenRequestFile, []byte(tokenRequestRawString), os.FileMode(0o644))
+	tokenRequestFile, err := os.CreateTemp("", "token-request-*.json")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("creating temp file: %w", err)
 	}
+	defer os.Remove(tokenRequestFile.Name())
+
+	if _, err := tokenRequestFile.WriteString(tokenRequestRawString); err != nil {
+		tokenRequestFile.Close()
+		return "", fmt.Errorf("writing token request: %w", err)
+	}
+	tokenRequestFile.Close()
 
 	var out string
 	verifyTokenCreation := func(g Gomega) {
@@ -313,7 +316,7 @@ func serviceAccountToken() (string, error) {
 			"/api/v1/namespaces/%s/serviceaccounts/%s/token",
 			namespace,
 			serviceAccountName,
-		), "-f", tokenRequestFile)
+		), "-f", tokenRequestFile.Name())
 
 		output, err := cmd.CombinedOutput()
 		g.Expect(err).NotTo(HaveOccurred())

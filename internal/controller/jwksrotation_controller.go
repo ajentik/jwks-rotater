@@ -53,7 +53,7 @@ type EventRecorder interface {
 	Eventf(regarding runtime.Object, related runtime.Object, eventtype, reason, action, note string, args ...any)
 }
 
-// +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotations,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotations,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotations/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotations/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
@@ -136,7 +136,8 @@ func (r *JWKSRotationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			r.recordEvent(&rotation, corev1.EventTypeNormal, "KeyRotated", "New key generated and appended to JWKS")
 			rotationTotal.WithLabelValues(rotation.Namespace, rotation.Name).Inc()
 
-			// Restart target deployments
+			// Restart target deployments (clear Degraded first; restartDeployments re-sets if needed)
+			clearCondition(&rotation, "Degraded")
 			r.restartDeployments(ctx, &rotation)
 		}
 	}
@@ -186,7 +187,6 @@ func (r *JWKSRotationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	setCondition(&rotation, "Ready", metav1.ConditionTrue, "ReconcileSuccessful",
 		fmt.Sprintf("JWKS contains %d active keys", ks.Len()))
 	clearCondition(&rotation, "Error")
-	clearCondition(&rotation, "Degraded")
 
 	// Update metrics
 	activeKeys.WithLabelValues(rotation.Namespace, rotation.Name).Set(float64(ks.Len()))
@@ -252,6 +252,10 @@ func (r *JWKSRotationReconciler) writeSecrets(ctx context.Context, rotation *jwk
 		var existing corev1.Secret
 		err := r.Get(ctx, types.NamespacedName{Name: secret.Name, Namespace: secret.Namespace}, &existing)
 		if apierrors.IsNotFound(err) {
+			if ks.Len() > 0 {
+				r.recordEvent(rotation, corev1.EventTypeWarning, "SecretRecreated",
+					fmt.Sprintf("Secret %s was missing and has been recreated", secret.Name))
+			}
 			if err := r.Create(ctx, secret); err != nil {
 				return fmt.Errorf("creating secret %s: %w", secret.Name, err)
 			}

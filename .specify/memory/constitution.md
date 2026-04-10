@@ -1,50 +1,99 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+- Version change: N/A → 1.0.0 (initial ratification)
+- Added principles:
+  - I. Test-Driven Development (NON-NEGOTIABLE)
+  - II. Operator Pattern Discipline
+  - III. Idiomatic Go
+  - IV. Security by Default
+  - V. Observability
+- Added sections:
+  - Technology Constraints
+  - Development Workflow
+  - Governance
+- Templates requiring updates:
+  - .specify/templates/plan-template.md ✅ no changes needed (generic)
+  - .specify/templates/spec-template.md ✅ no changes needed (generic)
+  - .specify/templates/tasks-template.md ✅ no changes needed (supports test-first)
+- Follow-up TODOs: none
+-->
+
+# JWKS Rotation Operator Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Test-Driven Development (NON-NEGOTIABLE)
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Every feature MUST follow the Red-Green-Refactor cycle:
+1. Write a failing test that captures the requirement
+2. Implement the minimum code to make the test pass
+3. Refactor while keeping tests green
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+- Unit tests MUST cover all reconciliation logic, key generation, retention calculations, and Secret assembly
+- Integration tests MUST use envtest (controller-runtime's test harness) to validate CRD behavior, Secret lifecycle, and status updates against a real API server
+- Table-driven tests MUST be used for functions with multiple input/output variations
+- Test files MUST live alongside the code they test (`_test.go` in the same package)
+- Mocks are permitted only for external cryptographic randomness; all Kubernetes API interactions MUST use envtest
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Operator Pattern Discipline
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+- Every reconciliation MUST be idempotent: applying the same CR twice produces the same cluster state
+- The controller MUST use status subresource conditions (Ready, Degraded, Error) following standard Kubernetes conventions
+- Finalizers MUST be used for cleanup of owned resources
+- The controller MUST set owner references on created Secrets so garbage collection works if finalizer logic fails
+- Requeue intervals MUST be derived from rotation/retention schedules, not hardcoded polling
+- Leader election MUST be enabled for all production deployments
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### III. Idiomatic Go
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+- Code MUST pass `go vet`, `staticcheck`, and `golangci-lint` with no suppressions unless explicitly justified
+- Errors MUST be wrapped with `fmt.Errorf("context: %w", err)` to preserve error chains
+- Exported types MUST have GoDoc comments
+- Package layout MUST follow kubebuilder conventions: `api/`, `internal/controller/`, `cmd/`
+- Dependencies MUST be kept minimal; prefer standard library and controller-runtime utilities over third-party packages
+- Context propagation MUST be used throughout; no background contexts in reconciliation paths
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### IV. Security by Default
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- Private key material MUST never appear in logs, events, metrics, or status fields
+- Secrets MUST be created with `type: Opaque` and contain only the `jwks.json` data key
+- Key generation MUST use `crypto/rand` exclusively; no deterministic or seeded randomness
+- RBAC manifests MUST follow least-privilege: only the permissions the operator actually needs
+- The operator MUST NOT read or cache private key material beyond the scope of a single reconciliation
+
+### V. Observability
+
+- The operator MUST emit Kubernetes Events for rotation, cleanup, recreation, and error conditions
+- Prometheus metrics MUST be exposed via controller-runtime's metrics server: rotation count, key age, error count, reconciliation duration
+- Structured logging MUST use controller-runtime's `logr` interface with consistent key-value pairs
+- Log levels: Info for lifecycle events, Error for failures, Debug (V=1) for reconciliation details
+
+## Technology Constraints
+
+- **Language**: Go 1.22+
+- **Framework**: controller-runtime v0.18+, kubebuilder v4 scaffolding
+- **JWKS library**: go-jose/v4 for JWK construction and serialization
+- **Testing**: Go's built-in `testing` package + controller-runtime envtest
+- **Metrics**: controller-runtime/pkg/metrics (Prometheus)
+- **Target platform**: Kubernetes 1.28+
+- **Build**: Standard `go build`; container image via multi-stage Dockerfile
+- **No external datastore**: all state lives in Kubernetes resources (CRs and Secrets)
+
+## Development Workflow
+
+- Every PR MUST include tests that fail without the change and pass with it
+- `make test` MUST pass before any code is merged
+- CRD changes MUST be generated via `controller-gen` from Go type markers, never hand-edited
+- RBAC manifests MUST be generated via `controller-gen` from kubebuilder markers
+- All generated code MUST be committed (manifests, DeepCopy methods, RBAC)
+- Commits MUST be atomic: one logical change per commit with a clear message
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution is the authoritative source of development standards for the JWKS Rotation Operator project. All code contributions, reviews, and architectural decisions MUST comply with these principles.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+- Amendments require: (1) a written proposal describing the change and rationale, (2) review and approval, (3) a migration plan if the change affects existing code
+- Version follows semantic versioning: MAJOR for principle removals or redefinitions, MINOR for new principles or material expansions, PATCH for clarifications
+- Compliance is verified during code review; reviewers MUST check adherence to TDD, idiomatic Go, and security principles
+
+**Version**: 1.0.0 | **Ratified**: 2026-04-10 | **Last Amended**: 2026-04-10

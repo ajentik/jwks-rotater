@@ -6,6 +6,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -63,7 +64,7 @@ func GenerateKey(keyType string, keySize int) (*ManagedKey, error) {
 
 	return &ManagedKey{
 		Key:       privKey,
-		KeyID:     fmt.Sprintf("%x", kid),
+		KeyID:     base64.RawURLEncoding.EncodeToString(kid),
 		CreatedAt: time.Now().UTC(),
 	}, nil
 }

@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -91,7 +92,7 @@ func (r *JWKSRotationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// Validate spec
 	if err := rotation.Spec.Validate(); err != nil {
-		return r.setErrorCondition(ctx, &rotation, err.Error())
+		return r.setErrorCondition(ctx, &rotation, "ValidationFailed", err.Error())
 	}
 
 	secretName := rotation.Spec.TargetSecret.Name
@@ -109,7 +110,7 @@ func (r *JWKSRotationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// Initial key generation (no keys yet)
 	if ks.Len() == 0 {
 		if err := r.addNewKey(ks, &rotation); err != nil {
-			return r.setErrorCondition(ctx, &rotation, fmt.Sprintf("generating initial key: %v", err))
+			return r.setErrorCondition(ctx, &rotation, "KeyGenerationFailed", fmt.Sprintf("generating initial key: %v", err))
 		}
 		needsWrite = true
 		rotated = true
@@ -128,7 +129,7 @@ func (r *JWKSRotationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		nextRotation := effectiveLastRotation.Add(rotation.Spec.RotationInterval.Duration)
 		if now.After(nextRotation) {
 			if err := r.addNewKey(ks, &rotation); err != nil {
-				return r.setErrorCondition(ctx, &rotation, fmt.Sprintf("rotating key: %v", err))
+				return r.setErrorCondition(ctx, &rotation, "KeyRotationFailed", fmt.Sprintf("rotating key: %v", err))
 			}
 			needsWrite = true
 			rotated = true
@@ -309,11 +310,19 @@ func (r *JWKSRotationReconciler) restartDeployments(ctx context.Context, rotatio
 			log.Error(err, "failed to get target Deployment", "name", ref.Name)
 			continue
 		}
-		if dep.Spec.Template.Annotations == nil {
-			dep.Spec.Template.Annotations = make(map[string]string)
+		patch := map[string]any{
+			"spec": map[string]any{
+				"template": map[string]any{
+					"metadata": map[string]any{
+						"annotations": map[string]string{
+							"kubectl.kubernetes.io/restartedAt": time.Now().UTC().Format(time.RFC3339),
+						},
+					},
+				},
+			},
 		}
-		dep.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().UTC().Format(time.RFC3339)
-		if err := r.Update(ctx, &dep); err != nil {
+		patchBytes, _ := json.Marshal(patch)
+		if err := r.Patch(ctx, &dep, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
 			log.Error(err, "failed to restart Deployment", "name", ref.Name)
 			continue
 		}
@@ -321,11 +330,11 @@ func (r *JWKSRotationReconciler) restartDeployments(ctx context.Context, rotatio
 	}
 }
 
-func (r *JWKSRotationReconciler) setErrorCondition(ctx context.Context, rotation *jwksv1alpha1.JWKSRotation, message string) (ctrl.Result, error) { //nolint:unparam
+func (r *JWKSRotationReconciler) setErrorCondition(ctx context.Context, rotation *jwksv1alpha1.JWKSRotation, reason, message string) (ctrl.Result, error) { //nolint:unparam
 	rotationErrorsTotal.WithLabelValues(rotation.Namespace, rotation.Name).Inc()
-	setCondition(rotation, "Error", metav1.ConditionTrue, "ValidationFailed", message)
+	setCondition(rotation, "Error", metav1.ConditionTrue, reason, message)
 	clearCondition(rotation, "Ready")
-	r.recordEvent(rotation, corev1.EventTypeWarning, "InvalidConfig", message)
+	r.recordEvent(rotation, corev1.EventTypeWarning, reason, message)
 	if err := r.Status().Update(ctx, rotation); err != nil {
 		return ctrl.Result{}, fmt.Errorf("updating error status: %w", err)
 	}

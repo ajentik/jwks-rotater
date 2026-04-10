@@ -179,8 +179,9 @@ func main() {
 	}
 
 	if err := (&controller.JWKSRotationReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("jwksrotation"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Failed to create controller", "controller", "JWKSRotation")
 		os.Exit(1)

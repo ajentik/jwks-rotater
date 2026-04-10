@@ -118,13 +118,18 @@ func ParseKeyStore(data []byte) (*KeyStore, error) {
 		}
 
 		var extra struct {
-			IAT int64 `json:"iat"`
+			IAT *int64 `json:"iat"`
 		}
 		if err := json.Unmarshal(rawKey, &extra); err != nil {
 			return nil, fmt.Errorf("parsing iat: %w", err)
 		}
 
-		iat := time.Unix(extra.IAT, 0).UTC()
+		var iat time.Time
+		if extra.IAT != nil && *extra.IAT > 0 {
+			iat = time.Unix(*extra.IAT, 0).UTC()
+		} else {
+			iat = time.Now().UTC()
+		}
 		ks.keys = append(ks.keys, keyEntry{jwk: jwk, iat: iat})
 	}
 	return ks, nil

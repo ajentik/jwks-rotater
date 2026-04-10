@@ -2,6 +2,7 @@ package jwks
 
 import (
 	"fmt"
+	"maps"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,11 +33,14 @@ func BuildSecrets(ks *KeyStore, namespace, secretName string, owner *metav1.Owne
 		ownerRefs = []metav1.OwnerReference{*owner}
 	}
 
+	privLabels := maps.Clone(labels)
+	pubLabels := maps.Clone(labels)
+
 	privSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            secretName,
 			Namespace:       namespace,
-			Labels:          labels,
+			Labels:          privLabels,
 			OwnerReferences: ownerRefs,
 		},
 		Type: corev1.SecretTypeOpaque,
@@ -49,7 +53,7 @@ func BuildSecrets(ks *KeyStore, namespace, secretName string, owner *metav1.Owne
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            secretName + "-public",
 			Namespace:       namespace,
-			Labels:          labels,
+			Labels:          pubLabels,
 			OwnerReferences: ownerRefs,
 		},
 		Type: corev1.SecretTypeOpaque,

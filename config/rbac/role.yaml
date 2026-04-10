@@ -38,8 +38,6 @@ rules:
   - jwksrotationpolicies
   - jwksrotations
   verbs:
-  - create
-  - delete
   - get
   - list
   - patch

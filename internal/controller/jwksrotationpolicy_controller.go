@@ -43,7 +43,7 @@ type JWKSRotationPolicyReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotationpolicies,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotationpolicies,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotationpolicies/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotationpolicies/finalizers,verbs=update
 

@@ -1,0 +1,17 @@
+apiVersion: jwks.ajentik.ai/v1alpha1
+kind: JWKSRotation
+metadata:
+  labels:
+    app.kubernetes.io/name: jwks-rotater
+    app.kubernetes.io/managed-by: kustomize
+  name: auth-service-jwks
+spec:
+  keyType: RSA
+  keySize: 2048
+  rotationInterval: 24h
+  retentionPeriod: 72h
+  retainSecretsOnDelete: false
+  targetSecret:
+    name: auth-jwks
+  targetDeployments:
+    - name: auth-service

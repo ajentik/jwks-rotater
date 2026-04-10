@@ -1,0 +1,15 @@
+apiVersion: jwks.ajentik.ai/v1alpha1
+kind: JWKSRotationPolicy
+metadata:
+  labels:
+    app.kubernetes.io/name: jwks-rotater
+    app.kubernetes.io/managed-by: kustomize
+  name: default-rotation
+spec:
+  selector:
+    matchLabels:
+      jwks.ajentik.ai/rotate: "true"
+  keyType: RSA
+  keySize: 2048
+  rotationInterval: 24h
+  retentionPeriod: 72h

@@ -1,0 +1,61 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - jwks.ajentik.ai
+  resources:
+  - jwksrotationpolicies
+  - jwksrotations
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - jwks.ajentik.ai
+  resources:
+  - jwksrotationpolicies/finalizers
+  - jwksrotations/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - jwks.ajentik.ai
+  resources:
+  - jwksrotationpolicies/status
+  - jwksrotations/status
+  verbs:
+  - get
+  - patch
+  - update

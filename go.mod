@@ -2,8 +2,6 @@ module github.com/yanok/jwks-rotater
 
 go 1.25.0
 
-toolchain go1.25.3
-
 require (
 	github.com/go-jose/go-jose/v4 v4.1.4
 	github.com/onsi/ginkgo/v2 v2.27.2

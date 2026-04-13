@@ -332,7 +332,11 @@ func (r *JWKSRotationReconciler) restartDeployments(ctx context.Context, rotatio
 				},
 			},
 		}
-		patchBytes, _ := json.Marshal(patch)
+		patchBytes, err := json.Marshal(patch)
+		if err != nil {
+			log.Error(err, "failed to marshal restart patch", "name", ref.Name)
+			continue
+		}
 		if err := r.Patch(ctx, &dep, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
 			log.Error(err, "failed to restart Deployment", "name", ref.Name)
 			continue

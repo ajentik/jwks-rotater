@@ -70,8 +70,8 @@ Every feature MUST follow the Red-Green-Refactor cycle:
 
 ## Technology Constraints
 
-- **Language**: Go 1.22+
-- **Framework**: controller-runtime v0.18+, kubebuilder v4 scaffolding
+- **Language**: Go 1.25+
+- **Framework**: controller-runtime v0.23+, kubebuilder v4 scaffolding
 - **JWKS library**: go-jose/v4 for JWK construction and serialization
 - **Testing**: Go's built-in `testing` package + controller-runtime envtest
 - **Metrics**: controller-runtime/pkg/metrics (Prometheus)

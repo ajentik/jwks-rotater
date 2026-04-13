@@ -9,8 +9,8 @@ A Kubernetes operator that manages automatic JWKS key rotation. The operator wat
 
 ## Technical Context
 
-**Language/Version**: Go 1.22+
-**Primary Dependencies**: controller-runtime v0.18+, kubebuilder v4, go-jose/v4
+**Language/Version**: Go 1.25+
+**Primary Dependencies**: controller-runtime v0.23+, kubebuilder v4, go-jose/v4
 **Storage**: Kubernetes Secrets (native) — no external datastore
 **Testing**: Go `testing` package + controller-runtime envtest; TDD mandatory
 **Target Platform**: Kubernetes 1.28+

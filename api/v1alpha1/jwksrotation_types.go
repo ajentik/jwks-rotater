@@ -114,6 +114,9 @@ func DefaultKeySize(kt KeyType) int {
 // Validate checks that the spec fields are consistent.
 // It applies default keySize when omitted (0).
 func (s *JWKSRotationSpec) Validate() error {
+	if s.TargetSecret.Name == "" {
+		return fmt.Errorf("targetSecret.name must not be empty")
+	}
 	if s.KeySize == 0 {
 		s.KeySize = DefaultKeySize(s.KeyType)
 	}

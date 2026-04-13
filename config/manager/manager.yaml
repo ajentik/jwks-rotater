@@ -5,7 +5,7 @@ metadata:
     control-plane: controller-manager
     app.kubernetes.io/name: jwks-rotater
     app.kubernetes.io/managed-by: kustomize
-  name: system
+  name: jwks-rotater-system
 ---
 apiVersion: apps/v1
 kind: Deployment

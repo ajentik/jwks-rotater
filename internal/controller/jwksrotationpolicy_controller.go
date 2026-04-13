@@ -64,6 +64,7 @@ func (r *JWKSRotationPolicyReconciler) Reconcile(ctx context.Context, req ctrl.R
 
 	if err := policy.Spec.Validate(); err != nil {
 		setPolicyCondition(&policy, "Error", metav1.ConditionTrue, "ValidationFailed", err.Error())
+		clearPolicyCondition(&policy, "Ready")
 		if statusErr := r.Status().Update(ctx, &policy); statusErr != nil {
 			return ctrl.Result{}, fmt.Errorf("updating error status: %w", statusErr)
 		}
@@ -149,7 +150,7 @@ func (r *JWKSRotationPolicyReconciler) Reconcile(ctx context.Context, req ctrl.R
 			if !managed {
 				continue
 			}
-		} else if !r.isSecretManaged(ctx, dep.Namespace, secretName) {
+		} else if !r.isSecretManaged(ctx, dep.Namespace, secretName, policy.Name) {
 			continue
 		}
 
@@ -188,13 +189,12 @@ func (r *JWKSRotationPolicyReconciler) buildExplicitSecretSet(ctx context.Contex
 	return result, nil
 }
 
-func (r *JWKSRotationPolicyReconciler) isSecretManaged(ctx context.Context, namespace, secretName string) bool {
+func (r *JWKSRotationPolicyReconciler) isSecretManaged(ctx context.Context, namespace, secretName, policyName string) bool {
 	var existing corev1.Secret
 	if err := r.Get(ctx, types.NamespacedName{Name: secretName, Namespace: namespace}, &existing); err != nil {
 		return false
 	}
-	_, managed := existing.Labels["jwks.ajentik.ai/managed-by"]
-	return managed
+	return existing.Labels["jwks.ajentik.ai/managed-by"] == "jwks-operator" && existing.Labels["jwks.ajentik.ai/policy"] == policyName
 }
 
 func (r *JWKSRotationPolicyReconciler) loadKeyStore(ctx context.Context, namespace, secretName string) (*jwks.KeyStore, error) {
@@ -241,7 +241,7 @@ func (r *JWKSRotationPolicyReconciler) writeSecrets(ctx context.Context, policy 
 		} else if err != nil {
 			return false, fmt.Errorf("fetching secret %s: %w", secret.Name, err)
 		} else {
-			if _, managed := existing.Labels["jwks.ajentik.ai/managed-by"]; !managed {
+			if existing.Labels["jwks.ajentik.ai/managed-by"] != "jwks-operator" || existing.Labels["jwks.ajentik.ai/policy"] != policy.Name {
 				logf.FromContext(ctx).Info("skipping update of unmanaged secret", "name", secret.Name, "namespace", secret.Namespace)
 				return false, nil
 			}

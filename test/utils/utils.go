@@ -152,7 +152,7 @@ func LoadImageToKindClusterWithName(name string) error {
 }
 
 // GetNonEmptyLines converts given command output string into individual objects
-// according to line breakers, and ignores the empty elements in it.
+// according to line breaks, and ignores the empty elements in it.
 func GetNonEmptyLines(output string) []string {
 	var res []string
 	elements := strings.SplitSeq(output, "\n")

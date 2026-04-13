@@ -149,6 +149,7 @@ func (r *JWKSRotationPolicyReconciler) Reconcile(ctx context.Context, req ctrl.R
 	policy.Status.MatchedDeployments = len(deployments.Items)
 	policy.Status.ManagedSecrets = managedSecrets
 
+	clearPolicyCondition(&policy, "Error")
 	setPolicyCondition(&policy, "Ready", metav1.ConditionTrue, "ReconcileSuccessful",
 		fmt.Sprintf("Managing %d secrets for %d deployments", managedSecrets, len(deployments.Items)))
 
@@ -203,7 +204,7 @@ func (r *JWKSRotationPolicyReconciler) writeSecrets(ctx context.Context, policy 
 		BlockOwnerDeletion: boolPtr(true),
 	}
 
-	privSecret, pubSecret, err := jwks.BuildSecrets(ks, namespace, secretName, owner)
+	privSecret, pubSecret, err := jwks.BuildSecrets(ks, namespace, secretName, policy.Name, owner)
 	if err != nil {
 		return err
 	}
@@ -221,6 +222,10 @@ func (r *JWKSRotationPolicyReconciler) writeSecrets(ctx context.Context, policy 
 		} else if err != nil {
 			return fmt.Errorf("fetching secret %s: %w", secret.Name, err)
 		} else {
+			if _, managed := existing.Labels["jwks.ajentik.ai/managed-by"]; !managed {
+				logf.FromContext(ctx).Info("skipping update of unmanaged secret", "name", secret.Name, "namespace", secret.Namespace)
+				continue
+			}
 			existing.Data = secret.Data
 			existing.Labels = secret.Labels
 			existing.OwnerReferences = secret.OwnerReferences
@@ -255,6 +260,15 @@ func setPolicyCondition(policy *jwksv1alpha1.JWKSRotationPolicy, condType string
 		Message:            message,
 		ObservedGeneration: policy.Generation,
 	})
+}
+
+func clearPolicyCondition(policy *jwksv1alpha1.JWKSRotationPolicy, condType string) {
+	for i, c := range policy.Status.Conditions {
+		if c.Type == condType {
+			policy.Status.Conditions = append(policy.Status.Conditions[:i], policy.Status.Conditions[i+1:]...)
+			return
+		}
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.

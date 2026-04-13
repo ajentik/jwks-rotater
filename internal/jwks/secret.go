@@ -10,7 +10,7 @@ import (
 
 // BuildSecrets creates the private and public Kubernetes Secrets from a KeyStore.
 // If owner is nil, no OwnerReferences are set (e.g. when retainSecretsOnDelete is true).
-func BuildSecrets(ks *KeyStore, namespace, secretName string, owner *metav1.OwnerReference) (*corev1.Secret, *corev1.Secret, error) {
+func BuildSecrets(ks *KeyStore, namespace, secretName, rotationName string, owner *metav1.OwnerReference) (*corev1.Secret, *corev1.Secret, error) {
 	privData, err := ks.MarshalJSON()
 	if err != nil {
 		return nil, nil, fmt.Errorf("marshaling private JWKS: %w", err)
@@ -24,8 +24,8 @@ func BuildSecrets(ks *KeyStore, namespace, secretName string, owner *metav1.Owne
 	labels := map[string]string{
 		"jwks.ajentik.ai/managed-by": "jwks-operator",
 	}
-	if owner != nil {
-		labels["jwks.ajentik.ai/rotation"] = owner.Name
+	if rotationName != "" {
+		labels["jwks.ajentik.ai/rotation"] = rotationName
 	}
 
 	var ownerRefs []metav1.OwnerReference

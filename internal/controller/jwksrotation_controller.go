@@ -243,7 +243,7 @@ func (r *JWKSRotationReconciler) writeSecrets(ctx context.Context, rotation *jwk
 		}
 	}
 
-	privSecret, pubSecret, err := jwks.BuildSecrets(ks, rotation.Namespace, secretName, owner)
+	privSecret, pubSecret, err := jwks.BuildSecrets(ks, rotation.Namespace, secretName, rotation.Name, owner)
 	if err != nil {
 		return fmt.Errorf("building secrets: %w", err)
 	}

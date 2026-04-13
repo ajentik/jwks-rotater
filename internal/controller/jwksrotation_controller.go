@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -263,7 +264,10 @@ func (r *JWKSRotationReconciler) writeSecrets(ctx context.Context, rotation *jwk
 			return fmt.Errorf("fetching secret %s: %w", secret.Name, err)
 		} else {
 			existing.Data = secret.Data
-			existing.Labels = secret.Labels
+			if existing.Labels == nil {
+				existing.Labels = make(map[string]string)
+			}
+			maps.Copy(existing.Labels, secret.Labels)
 			existing.OwnerReferences = secret.OwnerReferences
 			if err := r.Update(ctx, &existing); err != nil {
 				return fmt.Errorf("updating secret %s: %w", secret.Name, err)

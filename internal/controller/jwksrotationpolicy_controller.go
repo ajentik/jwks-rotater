@@ -47,6 +47,9 @@ type JWKSRotationPolicyReconciler struct {
 // +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotationpolicies,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotationpolicies/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotationpolicies/finalizers,verbs=update
+// +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotations,verbs=list
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch
 
 func (r *JWKSRotationPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)

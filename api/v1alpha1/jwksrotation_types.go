@@ -129,6 +129,12 @@ func (s *JWKSRotationSpec) Validate() error {
 	default:
 		return fmt.Errorf("unsupported key type %q", s.KeyType)
 	}
+	if s.RotationInterval.Duration <= 0 {
+		return fmt.Errorf("rotationInterval must be positive")
+	}
+	if s.RetentionPeriod.Duration <= 0 {
+		return fmt.Errorf("retentionPeriod must be positive")
+	}
 	if s.RetentionPeriod.Duration <= s.RotationInterval.Duration {
 		return fmt.Errorf("retentionPeriod must be greater than rotationInterval")
 	}

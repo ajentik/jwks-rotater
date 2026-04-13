@@ -149,6 +149,8 @@ func (r *JWKSRotationPolicyReconciler) Reconcile(ctx context.Context, req ctrl.R
 			if !managed {
 				continue
 			}
+		} else if !r.isSecretManaged(ctx, dep.Namespace, secretName) {
+			continue
 		}
 
 		managedSecrets++
@@ -184,6 +186,15 @@ func (r *JWKSRotationPolicyReconciler) buildExplicitSecretSet(ctx context.Contex
 		}
 	}
 	return result, nil
+}
+
+func (r *JWKSRotationPolicyReconciler) isSecretManaged(ctx context.Context, namespace, secretName string) bool {
+	var existing corev1.Secret
+	if err := r.Get(ctx, types.NamespacedName{Name: secretName, Namespace: namespace}, &existing); err != nil {
+		return false
+	}
+	_, managed := existing.Labels["jwks.ajentik.ai/managed-by"]
+	return managed
 }
 
 func (r *JWKSRotationPolicyReconciler) loadKeyStore(ctx context.Context, namespace, secretName string) (*jwks.KeyStore, error) {

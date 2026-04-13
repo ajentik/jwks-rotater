@@ -63,6 +63,8 @@ func (s *JWKSRotationPolicySpec) Validate() error {
 		if s.KeySize != 256 && s.KeySize != 384 {
 			return fmt.Errorf("invalid key size %d for ECDSA", s.KeySize)
 		}
+	default:
+		return fmt.Errorf("unsupported key type %q", s.KeyType)
 	}
 	if s.RetentionPeriod.Duration <= s.RotationInterval.Duration {
 		return fmt.Errorf("retentionPeriod must be greater than rotationInterval")

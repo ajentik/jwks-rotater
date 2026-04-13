@@ -138,8 +138,12 @@ func (r *JWKSRotationPolicyReconciler) Reconcile(ctx context.Context, req ctrl.R
 		}
 
 		if needsWrite {
-			if err := r.writeSecrets(ctx, &policy, dep.Namespace, secretName, ks); err != nil {
+			managed, err := r.writeSecrets(ctx, &policy, dep.Namespace, secretName, ks)
+			if err != nil {
 				log.Error(err, "writing secrets for deployment", "deployment", dep.Name)
+				continue
+			}
+			if !managed {
 				continue
 			}
 		}
@@ -195,7 +199,7 @@ func (r *JWKSRotationPolicyReconciler) loadKeyStore(ctx context.Context, namespa
 	return jwks.ParseKeyStore(data)
 }
 
-func (r *JWKSRotationPolicyReconciler) writeSecrets(ctx context.Context, policy *jwksv1alpha1.JWKSRotationPolicy, namespace, secretName string, ks *jwks.KeyStore) error {
+func (r *JWKSRotationPolicyReconciler) writeSecrets(ctx context.Context, policy *jwksv1alpha1.JWKSRotationPolicy, namespace, secretName string, ks *jwks.KeyStore) (bool, error) {
 	owner := &metav1.OwnerReference{
 		APIVersion:         policy.APIVersion,
 		Kind:               policy.Kind,
@@ -207,7 +211,7 @@ func (r *JWKSRotationPolicyReconciler) writeSecrets(ctx context.Context, policy 
 
 	privSecret, pubSecret, err := jwks.BuildSecrets(ks, namespace, secretName, policy.Name, owner)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	privSecret.Labels["jwks.ajentik.ai/policy"] = policy.Name
@@ -218,14 +222,14 @@ func (r *JWKSRotationPolicyReconciler) writeSecrets(ctx context.Context, policy 
 		err := r.Get(ctx, types.NamespacedName{Name: secret.Name, Namespace: secret.Namespace}, &existing)
 		if apierrors.IsNotFound(err) {
 			if err := r.Create(ctx, secret); err != nil {
-				return fmt.Errorf("creating secret %s: %w", secret.Name, err)
+				return false, fmt.Errorf("creating secret %s: %w", secret.Name, err)
 			}
 		} else if err != nil {
-			return fmt.Errorf("fetching secret %s: %w", secret.Name, err)
+			return false, fmt.Errorf("fetching secret %s: %w", secret.Name, err)
 		} else {
 			if _, managed := existing.Labels["jwks.ajentik.ai/managed-by"]; !managed {
 				logf.FromContext(ctx).Info("skipping update of unmanaged secret", "name", secret.Name, "namespace", secret.Namespace)
-				continue
+				return false, nil
 			}
 			existing.Data = secret.Data
 			if existing.Labels == nil {
@@ -234,12 +238,12 @@ func (r *JWKSRotationPolicyReconciler) writeSecrets(ctx context.Context, policy 
 			maps.Copy(existing.Labels, secret.Labels)
 			existing.OwnerReferences = secret.OwnerReferences
 			if err := r.Update(ctx, &existing); err != nil {
-				return fmt.Errorf("updating secret %s: %w", secret.Name, err)
+				return false, fmt.Errorf("updating secret %s: %w", secret.Name, err)
 			}
 		}
 	}
 
-	return nil
+	return true, nil
 }
 
 func setPolicyCondition(policy *jwksv1alpha1.JWKSRotationPolicy, condType string, status metav1.ConditionStatus, reason, message string) {

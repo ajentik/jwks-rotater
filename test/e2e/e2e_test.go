@@ -20,9 +20,7 @@ limitations under the License.
 package e2e
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -203,11 +201,6 @@ var _ = Describe("Manager", Ordered, func() {
 			_, err = utils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred(), "Metrics service should exist")
 
-			By("getting the service account token")
-			token, err := serviceAccountToken()
-			Expect(err).NotTo(HaveOccurred())
-			Expect(token).NotTo(BeEmpty())
-
 			By("ensuring the controller pod is ready")
 			verifyControllerPodReady := func(g Gomega) {
 				cmd := exec.Command("kubectl", "get", "pod", controllerPodName, "-n", namespace,
@@ -242,7 +235,7 @@ var _ = Describe("Manager", Ordered, func() {
 							"image": "curlimages/curl:8.7.1",
 							"command": ["/bin/sh", "-c"],
 							"args": [
-								"for i in $(seq 1 30); do curl -v -k -H 'Authorization: Bearer %s' https://%s.%s.svc.cluster.local:8443/metrics && exit 0 || sleep 2; done; exit 1"
+								"TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token); for i in $(seq 1 30); do curl -v -k -H \"Authorization: Bearer $TOKEN\" https://%s.%s.svc.cluster.local:8443/metrics && exit 0 || sleep 2; done; exit 1"
 							],
 							"securityContext": {
 								"readOnlyRootFilesystem": true,
@@ -259,7 +252,7 @@ var _ = Describe("Manager", Ordered, func() {
 						}],
 						"serviceAccountName": "%s"
 					}
-				}`, token, metricsServiceName, namespace, serviceAccountName))
+				}`, metricsServiceName, namespace, serviceAccountName))
 			_, err = utils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred(), "Failed to create curl-metrics pod")
 
@@ -298,51 +291,6 @@ var _ = Describe("Manager", Ordered, func() {
 	})
 })
 
-// serviceAccountToken returns a token for the specified service account in the given namespace.
-// It uses the Kubernetes TokenRequest API to generate a token by directly sending a request
-// and parsing the resulting token from the API response.
-func serviceAccountToken() (string, error) {
-	const tokenRequestRawString = `{
-		"apiVersion": "authentication.k8s.io/v1",
-		"kind": "TokenRequest"
-	}`
-
-	tokenRequestFile, err := os.CreateTemp("", "token-request-*.json")
-	if err != nil {
-		return "", fmt.Errorf("creating temp file: %w", err)
-	}
-	defer os.Remove(tokenRequestFile.Name())
-
-	if _, err := tokenRequestFile.WriteString(tokenRequestRawString); err != nil {
-		tokenRequestFile.Close()
-		return "", fmt.Errorf("writing token request: %w", err)
-	}
-	tokenRequestFile.Close()
-
-	var out string
-	verifyTokenCreation := func(g Gomega) {
-		// Execute kubectl command to create the token
-		cmd := exec.Command("kubectl", "create", "--raw", fmt.Sprintf(
-			"/api/v1/namespaces/%s/serviceaccounts/%s/token",
-			namespace,
-			serviceAccountName,
-		), "-f", tokenRequestFile.Name())
-
-		output, err := cmd.CombinedOutput()
-		g.Expect(err).NotTo(HaveOccurred())
-
-		// Parse the JSON output to extract the token
-		var token tokenRequest
-		err = json.Unmarshal(output, &token)
-		g.Expect(err).NotTo(HaveOccurred())
-
-		out = token.Status.Token
-	}
-	Eventually(verifyTokenCreation).Should(Succeed())
-
-	return out, err
-}
-
 // getMetricsOutput retrieves and returns the logs from the curl pod used to access the metrics endpoint.
 func getMetricsOutput() (string, error) {
 	By("getting the curl-metrics logs")
@@ -350,10 +298,3 @@ func getMetricsOutput() (string, error) {
 	return utils.Run(cmd)
 }
 
-// tokenRequest is a simplified representation of the Kubernetes TokenRequest API response,
-// containing only the token field that we need to extract.
-type tokenRequest struct {
-	Status struct {
-		Token string `json:"token"`
-	} `json:"status"`
-}

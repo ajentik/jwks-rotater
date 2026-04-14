@@ -13,14 +13,13 @@ A Kubernetes operator that automates JSON Web Key Set (JWKS) lifecycle managemen
 - **Prometheus metrics** for rotation counts, active keys, and reconcile duration
 - **Finalizer-based cleanup** with optional secret retention on CR deletion
 
-## Prerequisites
-
-- Go 1.25+
-- Docker 17.03+
-- kubectl v1.28+
-- Access to a Kubernetes v1.28+ cluster
-
 ## Installation
+
+**Cluster prerequisites:**
+
+- Kubernetes v1.28+ cluster
+- kubectl v1.28+ configured to communicate with your cluster
+- Cluster-admin privileges (or equivalent)
 
 Install the operator with a single command:
 
@@ -90,6 +89,11 @@ spec:
 ```
 
 ## Development
+
+**Developer prerequisites:**
+
+- Go 1.25+
+- Docker 17.03+
 
 ```sh
 make generate    # Regenerate deepcopy methods

@@ -46,6 +46,24 @@ This creates:
 
 The operator image `ghcr.io/yanok/jwks-rotater:latest` is pulled automatically.
 
+> [!NOTE]
+> The Quick Install path references the `main` branch manifest and the mutable image tag
+> `ghcr.io/yanok/jwks-rotater:latest`. This is convenient for evaluation, but it is not
+> reproducible. For production deployments, prefer pinning to a tagged release or
+> commit-specific manifest URL and to a specific image tag or digest.
+>
+> Example pinned manifest URL:
+> ```bash
+> kubectl apply -f https://raw.githubusercontent.com/yanok/jwks-rotater/<tag-or-commit>/dist/install.yaml
+> ```
+>
+> To override the operator image, download the manifest, update the image reference, and apply it:
+> ```bash
+> curl -L -o install.yaml https://raw.githubusercontent.com/yanok/jwks-rotater/<tag-or-commit>/dist/install.yaml
+> sed -i 's|ghcr.io/yanok/jwks-rotater:latest|ghcr.io/yanok/jwks-rotater:<tag-or-digest>|' install.yaml
+> kubectl apply -f install.yaml
+> ```
+
 ## Install with Kustomize
 
 For more control over the installation, clone the repository and use Kustomize:
@@ -204,19 +222,27 @@ Both uninstall methods remove the controller Deployment, RBAC resources, the `jw
 
 > **Warning**: Removing CRDs permanently deletes **all** JWKSRotation and JWKSRotationPolicy resources across the cluster. Make sure Step 1 completed successfully before proceeding.
 
-If you installed with the quick install method:
+If you installed with the quick install method, uninstall using the exact same manifest you originally applied. For reproducibility, save a local copy at install time and delete from the saved file:
+
+```bash
+kubectl delete -f ./install.yaml
+```
+
+If you did not save a local copy, you can delete using the remote manifest, but be aware that if the manifest has changed since you installed, `kubectl delete -f` may not clean up everything:
 
 ```bash
 kubectl delete -f https://raw.githubusercontent.com/yanok/jwks-rotater/main/dist/install.yaml
 ```
-
-> **Tip**: If you anticipate the install manifest may change between versions, save a local copy at install time (`curl -O ...`) and use that same file for uninstall.
 
 If you installed with Kustomize:
 
 ```bash
 make undeploy
 ```
+
+This removes the controller Deployment, RBAC resources, the `jwks-rotater-system` namespace, **and** the CRDs.
+
+> **Warning**: Deleting the CRDs permanently deletes all JWKSRotation and JWKSRotationPolicy resources in the cluster. Make sure Step 1 completed successfully before running `make undeploy`.
 
 **Step 3: Verify CRD removal (optional)**
 
@@ -262,11 +288,13 @@ make docker-push IMG=<your-registry>/jwks-rotater:<tag>
 make deploy IMG=<your-registry>/jwks-rotater:<tag>
 ```
 
-For multi-platform builds (linux/arm64, linux/amd64):
+For multi-platform builds (linux/arm64, linux/amd64), use `docker-buildx`. This target builds **and pushes** the image to the registry in a single step, so you must be authenticated with your registry beforehand:
 
 ```bash
 make docker-buildx IMG=<your-registry>/jwks-rotater:<tag>
 ```
+
+If you prefer a local-only build first, use `make docker-build` and `make docker-push` separately as shown above.
 
 To generate a standalone install manifest with your custom image:
 

@@ -20,6 +20,17 @@ A Kubernetes operator that automates JSON Web Key Set (JWKS) lifecycle managemen
 - kubectl v1.28+
 - Access to a Kubernetes v1.28+ cluster
 
+## Installation
+
+Install the operator with a single command:
+
+```sh
+kubectl apply -f https://raw.githubusercontent.com/yanok/jwks-rotater/main/dist/install.yaml
+```
+
+For detailed instructions including Kustomize-based installation, verification,
+troubleshooting, and building from source, see the [Installation Guide](docs/install.md).
+
 ## Quick Start
 
 ### Run locally (against current kubeconfig)
@@ -35,27 +46,6 @@ In another terminal:
 kubectl apply -f config/samples/jwks_v1alpha1_jwksrotation.yaml
 kubectl get jwksrotation -o wide
 kubectl get secret | grep jwks
-```
-
-### Deploy to a cluster
-
-```sh
-# Build and push the image
-make docker-build docker-push IMG=<registry>/jwks-rotater:latest
-
-# Deploy CRDs, RBAC, and the controller
-make deploy IMG=<registry>/jwks-rotater:latest
-
-# Apply sample CRs
-kubectl apply -k config/samples/
-```
-
-### Uninstall
-
-```sh
-kubectl delete -k config/samples/   # Delete CRs
-make undeploy                        # Remove controller and RBAC
-make uninstall                       # Remove CRDs
 ```
 
 ## Custom Resources
@@ -106,15 +96,6 @@ make generate    # Regenerate deepcopy methods
 make manifests   # Regenerate CRD and RBAC manifests
 make test        # Run unit and integration tests (envtest)
 make lint        # Run golangci-lint
-```
-
-## Project Distribution
-
-### Single YAML installer
-
-```sh
-make build-installer IMG=<registry>/jwks-rotater:latest
-kubectl apply -f dist/install.yaml
 ```
 
 ## License

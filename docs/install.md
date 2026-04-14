@@ -198,7 +198,11 @@ kubectl delete jwksrotationpolicy --all
 
 Wait for the resources to be fully deleted before proceeding.
 
-**Step 2: Remove the operator**
+**Step 2: Remove the operator and CRDs**
+
+Both uninstall methods remove the controller Deployment, RBAC resources, the `jwks-rotater-system` namespace, **and** the CRDs.
+
+> **Warning**: Removing CRDs permanently deletes **all** JWKSRotation and JWKSRotationPolicy resources across the cluster. Make sure Step 1 completed successfully before proceeding.
 
 If you installed with the quick install method:
 
@@ -214,17 +218,19 @@ If you installed with Kustomize:
 make undeploy
 ```
 
-This removes the controller Deployment, RBAC resources, and the `jwks-rotater-system` namespace.
+**Step 3: Verify CRD removal (optional)**
 
-**Step 3: Remove CRDs (optional)**
+Confirm the CRDs have been removed:
 
-If you want to remove the CRDs as well:
+```bash
+kubectl get crd jwksrotations.jwks.ajentik.ai jwksrotationpolicies.jwks.ajentik.ai 2>&1
+```
+
+If they still exist (e.g., due to a partial uninstall), remove them manually:
 
 ```bash
 kubectl delete crd jwksrotations.jwks.ajentik.ai jwksrotationpolicies.jwks.ajentik.ai
 ```
-
-> **Warning**: This permanently deletes all JWKSRotation and JWKSRotationPolicy resources that may still exist in the cluster.
 
 ## Building from Source
 

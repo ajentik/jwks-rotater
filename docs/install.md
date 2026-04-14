@@ -101,22 +101,21 @@ kubectl get crds | grep jwks
 Expected output:
 
 ```
-jwksrotationpolicies.jwks.ajentik.ai   2026-04-14T00:00:00Z
-jwksrotations.jwks.ajentik.ai          2026-04-14T00:00:00Z
+jwksrotationpolicies.jwks.ajentik.ai   <date>
+jwksrotations.jwks.ajentik.ai          <date>
 ```
 
-**Check RBAC resources:**
+**Check the core RBAC ClusterRole:**
 
 ```bash
-kubectl get clusterrole | grep jwks-rotater
+kubectl get clusterrole jwks-rotater-manager-role
 ```
 
 Expected output:
 
 ```
-jwks-rotater-manager-role              2026-04-14T00:00:00Z
-jwks-rotater-metrics-auth-role         2026-04-14T00:00:00Z
-jwks-rotater-metrics-reader            2026-04-14T00:00:00Z
+NAME                          CREATED AT
+jwks-rotater-manager-role     <date>
 ```
 
 **Check the ServiceAccount:**
@@ -206,6 +205,8 @@ If you installed with the quick install method:
 ```bash
 kubectl delete -f https://raw.githubusercontent.com/yanok/jwks-rotater/main/dist/install.yaml
 ```
+
+> **Tip**: If you anticipate the install manifest may change between versions, save a local copy at install time (`curl -O ...`) and use that same file for uninstall.
 
 If you installed with Kustomize:
 
@@ -315,7 +316,7 @@ kubectl logs -n jwks-rotater-system deployment/jwks-rotater-controller-manager -
   ```bash
   kubectl get clusterrole jwks-rotater-manager-role -o yaml
   ```
-- **Malformed arguments**: Check the Deployment spec for incorrect command-line flags. The default flags are `--leader-elect` and `--health-probe-bind-address=:8081`.
+- **Malformed arguments**: Check the Deployment spec for incorrect command-line flags. The default flags are `--leader-elect`, `--health-probe-bind-address=:8081`, and `--metrics-bind-address=:8443`.
 
 ### CRDs Not Registered
 

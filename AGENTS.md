@@ -318,3 +318,10 @@ make docker-build docker-push IMG=$IMG
 - **controller-runtime**: https://github.com/kubernetes-sigs/controller-runtime
 - **controller-tools**: https://github.com/kubernetes-sigs/controller-tools
 - **Kubebuilder Repo**: https://github.com/kubernetes-sigs/kubebuilder
+
+## Active Technologies
+- Go 1.25+ (operator), Markdown (documentation deliverable) + kustomize v5.8.1 (manifest generation), controller-gen v0.20.1 (CRD/RBAC generation) (002-operator-install-guide)
+- N/A (documentation feature, no datastore) (002-operator-install-guide)
+
+## Recent Changes
+- 002-operator-install-guide: Added Go 1.25+ (operator), Markdown (documentation deliverable) + kustomize v5.8.1 (manifest generation), controller-gen v0.20.1 (CRD/RBAC generation)

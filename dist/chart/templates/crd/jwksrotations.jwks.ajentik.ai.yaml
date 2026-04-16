@@ -1,0 +1,204 @@
+{{- if .Values.crd.enable }}
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    {{- if .Values.crd.keep }}
+    "helm.sh/resource-policy": keep
+    {{- end }}
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: jwksrotations.jwks.ajentik.ai
+spec:
+  group: jwks.ajentik.ai
+  names:
+    kind: JWKSRotation
+    listKind: JWKSRotationList
+    plural: jwksrotations
+    singular: jwksrotation
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.keyType
+      name: Key Type
+      type: string
+    - jsonPath: .status.activeKeys
+      name: Active Keys
+      type: integer
+    - jsonPath: .status.lastRotation
+      name: Last Rotation
+      type: date
+    - jsonPath: .status.nextRotation
+      name: Next Rotation
+      type: date
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: JWKSRotation is the Schema for the jwksrotations API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: JWKSRotationSpec defines the desired state of JWKSRotation.
+            properties:
+              keySize:
+                description: |-
+                  keySize is the key size in bits. RSA: 2048 or 4096. ECDSA: 256 (P-256) or 384 (P-384).
+                  Defaults to 2048 for RSA and 256 for ECDSA when omitted.
+                type: integer
+              keyType:
+                default: RSA
+                description: keyType is the cryptographic key algorithm. Defaults
+                  to RSA.
+                enum:
+                - RSA
+                - ECDSA
+                type: string
+              retainSecretsOnDelete:
+                default: false
+                description: |-
+                  retainSecretsOnDelete controls whether Secrets are deleted when this CR is removed.
+                  If true, Secrets are left in place as orphans.
+                type: boolean
+              retentionPeriod:
+                description: |-
+                  retentionPeriod specifies how long to keep old keys before cleanup.
+                  Must be greater than rotationInterval.
+                type: string
+              rotationInterval:
+                description: rotationInterval specifies how often to generate a new
+                  key (e.g., "24h", "168h").
+                type: string
+              targetDeployments:
+                description: targetDeployments lists Deployments to restart on key
+                  rotation.
+                items:
+                  description: TargetDeploymentRef references a Deployment to restart
+                    on rotation.
+                  properties:
+                    name:
+                      description: name is the Deployment name in the same namespace
+                        as the JWKSRotation resource.
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              targetSecret:
+                description: targetSecret references the Secret to store the JWKS
+                  in.
+                properties:
+                  name:
+                    description: |-
+                      name is the name of the target Secret. The public Secret is automatically
+                      named <name>-public.
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - retentionPeriod
+            - rotationInterval
+            - targetSecret
+            type: object
+          status:
+            description: JWKSRotationStatus defines the observed state of JWKSRotation.
+            properties:
+              activeKeys:
+                description: activeKeys is the number of keys currently in the JWKS.
+                type: integer
+              conditions:
+                description: conditions represent the current state of the JWKSRotation
+                  resource.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              lastRotation:
+                description: lastRotation is the time of the most recent key rotation.
+                format: date-time
+                type: string
+              nextRotation:
+                description: nextRotation is the scheduled time for the next rotation.
+                format: date-time
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+{{- end }}

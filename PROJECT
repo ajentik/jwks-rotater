@@ -6,6 +6,10 @@ cliVersion: 4.13.1
 domain: ajentik.ai
 layout:
 - go.kubebuilder.io/v4
+plugins:
+  helm.kubebuilder.io/v2-alpha:
+    manifests: dist/install.yaml
+    output: dist
 projectName: jwks-rotater
 repo: github.com/yanok/jwks-rotater
 resources:
@@ -20,7 +24,6 @@ resources:
   version: v1alpha1
 - api:
     crdVersion: v1
-    namespaced: false
   controller: true
   domain: ajentik.ai
   group: jwks

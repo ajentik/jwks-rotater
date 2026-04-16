@@ -1,0 +1,24 @@
+{{- if .Values.rbacHelpers.enable }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/name: {{ include "jwks-rotater.name" . }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  name: {{ include "jwks-rotater.resourceName" (dict "suffix" "jwksrotation-admin-role" "context" $) }}
+rules:
+- apiGroups:
+  - jwks.ajentik.ai
+  resources:
+  - jwksrotations
+  verbs:
+  - '*'
+- apiGroups:
+  - jwks.ajentik.ai
+  resources:
+  - jwksrotations/status
+  verbs:
+  - get
+{{- end }}

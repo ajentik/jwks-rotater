@@ -1,0 +1,23 @@
+name: Helm Chart Validation
+
+on:
+  pull_request:
+    paths:
+      - 'dist/chart/**'
+
+jobs:
+  validate:
+    name: Lint and Template
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone the code
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint chart
+        run: helm lint dist/chart/
+
+      - name: Render templates
+        run: helm template jwks-rotater dist/chart/

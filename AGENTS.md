@@ -322,6 +322,7 @@ make docker-build docker-push IMG=$IMG
 ## Active Technologies
 - Go 1.25+ (operator), Markdown (documentation deliverable) + kustomize v5.8.1 (manifest generation), controller-gen v0.20.1 (CRD/RBAC generation) (002-operator-install-guide)
 - N/A (documentation feature, no datastore) (002-operator-install-guide)
+- Go 1.25+, GitHub Actions YAML, Helm chart templates + kubebuilder v4 (helm/v2-alpha plugin), docker buildx, helm CLI, GitHub Actions (003-helm-ghcr-deploy)
 
 ## Recent Changes
 - 002-operator-install-guide: Added Go 1.25+ (operator), Markdown (documentation deliverable) + kustomize v5.8.1 (manifest generation), controller-gen v0.20.1 (CRD/RBAC generation)

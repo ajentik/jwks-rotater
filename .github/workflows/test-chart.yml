@@ -2,7 +2,12 @@ name: Test Chart
 
 on:
   push:
+    branches:
+      - main
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   test-e2e:
@@ -32,8 +37,8 @@ jobs:
       - name: Prepare jwks-rotater
         run: |
           go mod tidy
-          make docker-build IMG=controller:latest
-          kind load docker-image controller:latest
+          make docker-build IMG=jwks-rotater:v0.1.0
+          kind load docker-image jwks-rotater:v0.1.0
 
       - name: Install Helm
         run: make install-helm

@@ -5,6 +5,9 @@ on:
     paths:
       - 'dist/chart/**'
 
+permissions:
+  contents: read
+
 jobs:
   validate:
     name: Lint and Template

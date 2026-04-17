@@ -34,10 +34,10 @@ jobs:
           go mod tidy
           make test
 
+      - name: Check linter configuration
+        run: make lint-config
       - name: Run linter
-        uses: golangci/golangci-lint-action@v7
-        with:
-          version: v2.8.0
+        run: make lint
 
   build-and-push-image:
     name: Build and Push Image

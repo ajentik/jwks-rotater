@@ -22,7 +22,11 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Cache tool binaries
+        uses: actions/cache@v4
+        with:
+          path: bin/
+          key: ${{ runner.os }}-tools-${{ hashFiles('Makefile') }}
+
       - name: Running Tests
-        run: |
-          go mod tidy
-          make test
+        run: make test-ci

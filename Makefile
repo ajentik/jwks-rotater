@@ -61,6 +61,18 @@ vet: ## Run go vet against code.
 test: manifests generate fmt vet setup-envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell "$(ENVTEST)" use $(ENVTEST_K8S_VERSION) --bin-dir "$(LOCALBIN)" -p path)" go test $$(go list ./... | grep -v /e2e) -coverprofile cover.out
 
+.PHONY: test-ci
+test-ci: setup-envtest ## Run tests without code-generation prerequisites (for CI).
+	KUBEBUILDER_ASSETS="$(shell "$(ENVTEST)" use $(ENVTEST_K8S_VERSION) --bin-dir "$(LOCALBIN)" -p path)" go test $$(go list ./... | grep -v /e2e) -coverprofile cover.out
+
+.PHONY: verify-codegen
+verify-codegen: manifests generate fmt ## Verify generated code and formatting are up to date.
+	@if [ -n "$$(git diff --name-only)" ]; then \
+		echo "ERROR: Generated files are out of date. Run 'make manifests generate fmt' and commit the changes."; \
+		git diff --name-only; \
+		exit 1; \
+	fi
+
 # TODO(user): To use a different vendor for e2e tests, modify the setup under 'test/e2e'.
 # The default setup assumes Kind is pre-installed and builds/loads the Manager Docker image locally.
 # CertManager is installed by default; skip with:

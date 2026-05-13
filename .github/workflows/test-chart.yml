@@ -22,6 +22,12 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Cache tool binaries
+        uses: actions/cache@v4
+        with:
+          path: bin/
+          key: ${{ runner.os }}-tools-${{ hashFiles('Makefile') }}
+
       - name: Install the latest version of kind
         run: |
           curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-$(go env GOARCH)
@@ -36,7 +42,6 @@ jobs:
 
       - name: Prepare jwks-rotater
         run: |
-          go mod tidy
           make docker-build IMG=jwks-rotater:v0.1.0
           kind load docker-image jwks-rotater:v0.1.0
 

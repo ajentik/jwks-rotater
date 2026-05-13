@@ -35,6 +35,9 @@ spec:
       {{- with .Values.manager.nodeSelector }}
       nodeSelector: {{ toYaml . | nindent 10 }}
       {{- end }}
+      {{- with .Values.manager.imagePullSecrets }}
+      imagePullSecrets: {{ toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       - args:
         {{- if .Values.metrics.enable }}
@@ -57,6 +60,23 @@ spec:
             port: 8081
           initialDelaySeconds: 15
           periodSeconds: 20
+        {{- $overrideKeys := dict }}
+        {{- range $key, $val := .Values.manager.envOverrides }}
+        {{-   $_ := set $overrideKeys $key true }}
+        {{- end }}
+        {{- $envList := list }}
+        {{- range .Values.manager.env }}
+        {{-   if not (hasKey $overrideKeys .name) }}
+        {{-     $envList = append $envList . }}
+        {{-   end }}
+        {{- end }}
+        {{- range $key, $val := .Values.manager.envOverrides }}
+        {{-   $envList = append $envList (dict "name" $key "value" $val) }}
+        {{- end }}
+        {{- if $envList }}
+        env:
+          {{- toYaml $envList | nindent 10 }}
+        {{- end }}
         name: manager
         ports: []
         readinessProbe:

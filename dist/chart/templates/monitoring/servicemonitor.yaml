@@ -17,23 +17,21 @@ spec:
       scheme: https
       bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
       tlsConfig:
-        {{- if .Values.certManager.enable }}
+        {{- if .Values.prometheus.tlsSecretName }}
         serverName: {{ include "jwks-rotater.resourceName" (dict "suffix" "controller-manager-metrics-service" "context" $) }}.{{ .Release.Namespace }}.svc
-        # Apply secure TLS configuration with cert-manager
         insecureSkipVerify: false
         ca:
           secret:
-            name: metrics-server-cert
+            name: {{ .Values.prometheus.tlsSecretName }}
             key: ca.crt
         cert:
           secret:
-            name: metrics-server-cert
+            name: {{ .Values.prometheus.tlsSecretName }}
             key: tls.crt
         keySecret:
-          name: metrics-server-cert
+          name: {{ .Values.prometheus.tlsSecretName }}
           key: tls.key
         {{- else }}
-        # Development/Test mode (insecure configuration)
         insecureSkipVerify: true
         {{- end }}
   selector:

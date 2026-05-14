@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"reflect"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -30,9 +31,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	jwksv1alpha1 "github.com/yanok/jwks-rotater/api/v1alpha1"
 	"github.com/yanok/jwks-rotater/internal/jwks"
@@ -117,11 +121,9 @@ func (r *JWKSRotationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		log.Info("generated initial key", "secretName", secretName)
 	}
 
-	// Rotation check — derive effective last rotation from status or keystore
+	// Rotation check — derive last rotation time from keystore (source of truth)
 	var effectiveLastRotation time.Time
-	if rotation.Status.LastRotation != nil {
-		effectiveLastRotation = rotation.Status.LastRotation.Time
-	} else if newest := ks.NewestKey(); newest != nil {
+	if newest := ks.NewestKey(); newest != nil {
 		effectiveLastRotation = newest.CreatedAt
 	}
 
@@ -397,11 +399,25 @@ func clearCondition(rotation *jwksv1alpha1.JWKSRotation, condType string) {
 
 func boolPtr(b bool) *bool { return &b }
 
+// secretDataChangedPredicate triggers reconciliation only when a Secret's Data
+// field changes, or when a Secret is created/deleted. This avoids spurious
+// reconciles from metadata-only updates (e.g., resource version bumps).
+var secretDataChangedPredicate = predicate.Funcs{
+	UpdateFunc: func(e event.UpdateEvent) bool {
+		oldSecret, ok1 := e.ObjectOld.(*corev1.Secret)
+		newSecret, ok2 := e.ObjectNew.(*corev1.Secret)
+		if !ok1 || !ok2 {
+			return true
+		}
+		return !reflect.DeepEqual(oldSecret.Data, newSecret.Data)
+	},
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *JWKSRotationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&jwksv1alpha1.JWKSRotation{}).
-		Owns(&corev1.Secret{}).
+		Owns(&corev1.Secret{}, builder.WithPredicates(secretDataChangedPredicate)).
 		Named("jwksrotation").
 		Complete(r)
 }

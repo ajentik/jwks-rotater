@@ -63,6 +63,7 @@ type EventRecorder interface {
 // +kubebuilder:rbac:groups=jwks.ajentik.ai,resources=jwksrotations/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+// +kubebuilder:rbac:groups=events.k8s.io,resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;patch
 
 func (r *JWKSRotationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {

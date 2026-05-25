@@ -25,8 +25,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	jwksv1alpha1 "github.com/yanok/jwks-rotater/api/v1alpha1"
-	"github.com/yanok/jwks-rotater/internal/jwks"
+	jwksv1alpha1 "github.com/ajentik/jwks-rotater/api/v1alpha1"
+	"github.com/ajentik/jwks-rotater/internal/jwks"
 )
 
 const (

@@ -14,8 +14,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	jwksv1alpha1 "github.com/yanok/jwks-rotater/api/v1alpha1"
-	"github.com/yanok/jwks-rotater/internal/jwks"
+	jwksv1alpha1 "github.com/ajentik/jwks-rotater/api/v1alpha1"
+	"github.com/ajentik/jwks-rotater/internal/jwks"
 )
 
 // TestReconcile_NoDoubleRotation simulates the race condition where reconcile A

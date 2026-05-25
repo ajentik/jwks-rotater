@@ -15,7 +15,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/yanok/jwks-rotater/test/utils"
+	"github.com/ajentik/jwks-rotater/test/utils"
 )
 
 // namespace where the project is deployed in

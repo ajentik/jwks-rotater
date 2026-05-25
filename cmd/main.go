@@ -22,8 +22,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	jwksv1alpha1 "github.com/yanok/jwks-rotater/api/v1alpha1"
-	"github.com/yanok/jwks-rotater/internal/controller"
+	jwksv1alpha1 "github.com/ajentik/jwks-rotater/api/v1alpha1"
+	"github.com/ajentik/jwks-rotater/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 

@@ -33,7 +33,7 @@ kubectl version --short
 Install the operator with a single command:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/yanok/jwks-rotater/main/dist/install.yaml
+kubectl apply -f https://raw.githubusercontent.com/ajentik/jwks-rotater/main/dist/install.yaml
 ```
 
 This creates:
@@ -44,23 +44,23 @@ This creates:
 - RBAC resources (ClusterRoles, RoleBindings, ServiceAccount) with least-privilege permissions
 - A metrics Service on port 8443
 
-The operator image `ghcr.io/yanok/jwks-rotater:latest` is pulled automatically.
+The operator image `ghcr.io/ajentik/jwks-rotater:latest` is pulled automatically.
 
 > [!NOTE]
 > The Quick Install path references the `main` branch manifest and the mutable image tag
-> `ghcr.io/yanok/jwks-rotater:latest`. This is convenient for evaluation, but it is not
+> `ghcr.io/ajentik/jwks-rotater:latest`. This is convenient for evaluation, but it is not
 > reproducible. For production deployments, prefer pinning to a tagged release or
 > commit-specific manifest URL and to a specific image tag or digest.
 >
 > Example pinned manifest URL:
 > ```bash
-> kubectl apply -f https://raw.githubusercontent.com/yanok/jwks-rotater/<tag-or-commit>/dist/install.yaml
+> kubectl apply -f https://raw.githubusercontent.com/ajentik/jwks-rotater/<tag-or-commit>/dist/install.yaml
 > ```
 >
 > To override the operator image, download the manifest, update the image reference, and apply it:
 > ```bash
-> curl -L -o install.yaml https://raw.githubusercontent.com/yanok/jwks-rotater/<tag-or-commit>/dist/install.yaml
-> sed -i 's|ghcr.io/yanok/jwks-rotater:latest|ghcr.io/yanok/jwks-rotater:<tag-or-digest>|' install.yaml
+> curl -L -o install.yaml https://raw.githubusercontent.com/ajentik/jwks-rotater/<tag-or-commit>/dist/install.yaml
+> sed -i 's|ghcr.io/ajentik/jwks-rotater:latest|ghcr.io/ajentik/jwks-rotater:<tag-or-digest>|' install.yaml
 > kubectl apply -f install.yaml
 > ```
 
@@ -69,7 +69,7 @@ The operator image `ghcr.io/yanok/jwks-rotater:latest` is pulled automatically.
 For more control over the installation, clone the repository and use Kustomize:
 
 ```bash
-git clone https://github.com/yanok/jwks-rotater.git
+git clone https://github.com/ajentik/jwks-rotater.git
 cd jwks-rotater
 ```
 
@@ -82,7 +82,7 @@ Review and optionally customize the manifests in `config/`:
 Deploy with:
 
 ```bash
-make deploy IMG=ghcr.io/yanok/jwks-rotater:latest
+make deploy IMG=ghcr.io/ajentik/jwks-rotater:latest
 ```
 
 To use a different image, replace the `IMG` value:
@@ -182,7 +182,7 @@ kubectl apply -f sample-jwksrotation.yaml
 Or apply the bundled sample directly:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/yanok/jwks-rotater/main/config/samples/jwks_v1alpha1_jwksrotation.yaml
+kubectl apply -f https://raw.githubusercontent.com/ajentik/jwks-rotater/main/config/samples/jwks_v1alpha1_jwksrotation.yaml
 ```
 
 Check the resource status:
@@ -231,7 +231,7 @@ kubectl delete -f ./install.yaml
 If you did not save a local copy, you can delete using the remote manifest, but be aware that if the manifest has changed since you installed, `kubectl delete -f` may not clean up everything:
 
 ```bash
-kubectl delete -f https://raw.githubusercontent.com/yanok/jwks-rotater/main/dist/install.yaml
+kubectl delete -f https://raw.githubusercontent.com/ajentik/jwks-rotater/main/dist/install.yaml
 ```
 
 If you installed with Kustomize:
@@ -271,7 +271,7 @@ To build and deploy the operator from source code:
 **Build the image:**
 
 ```bash
-git clone https://github.com/yanok/jwks-rotater.git
+git clone https://github.com/ajentik/jwks-rotater.git
 cd jwks-rotater
 make docker-build IMG=<your-registry>/jwks-rotater:<tag>
 ```

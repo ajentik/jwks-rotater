@@ -1,4 +1,4 @@
-module github.com/yanok/jwks-rotater
+module github.com/ajentik/jwks-rotater
 
 go 1.25.0
 

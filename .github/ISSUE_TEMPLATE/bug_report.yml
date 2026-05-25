@@ -1,0 +1,44 @@
+name: Bug report
+description: Report a defect in the operator
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the unexpected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: Minimal steps, including the JWKSRotation/JWKSRotationPolicy CR and any relevant Deployments.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Operator version / commit
+      placeholder: v0.2.0 or commit SHA
+    validations:
+      required: true
+  - type: input
+    id: k8s
+    attributes:
+      label: Kubernetes version
+      placeholder: v1.30.0
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Operator logs around the time of the issue. Redact any secrets.
+      render: shell

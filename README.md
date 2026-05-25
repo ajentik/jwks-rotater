@@ -1,5 +1,12 @@
 # JWKS Rotation Operator
 
+[![Tests](https://github.com/ajentik/jwks-rotater/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/ajentik/jwks-rotater/actions/workflows/test.yml)
+[![Lint](https://github.com/ajentik/jwks-rotater/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/ajentik/jwks-rotater/actions/workflows/lint.yml)
+[![Release](https://img.shields.io/github/v/release/ajentik/jwks-rotater?sort=semver)](https://github.com/ajentik/jwks-rotater/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Go Reference](https://pkg.go.dev/badge/github.com/ajentik/jwks-rotater.svg)](https://pkg.go.dev/github.com/ajentik/jwks-rotater)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ajentik/jwks-rotater)](https://goreportcard.com/report/github.com/ajentik/jwks-rotater)
+
 A Kubernetes operator that automates JSON Web Key Set (JWKS) lifecycle management — key generation, rotation, retention, and distribution — for services that sign or verify JWTs.
 
 ## Features

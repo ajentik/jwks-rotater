@@ -22,7 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	jwksv1alpha1 "github.com/yanok/jwks-rotater/api/v1alpha1"
+	jwksv1alpha1 "github.com/ajentik/jwks-rotater/api/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 

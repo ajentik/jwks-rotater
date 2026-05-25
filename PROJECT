@@ -11,7 +11,7 @@ plugins:
     manifests: dist/install.yaml
     output: dist
 projectName: jwks-rotater
-repo: github.com/yanok/jwks-rotater
+repo: github.com/ajentik/jwks-rotater
 resources:
 - api:
     crdVersion: v1
@@ -20,7 +20,7 @@ resources:
   domain: ajentik.ai
   group: jwks
   kind: JWKSRotation
-  path: github.com/yanok/jwks-rotater/api/v1alpha1
+  path: github.com/ajentik/jwks-rotater/api/v1alpha1
   version: v1alpha1
 - api:
     crdVersion: v1
@@ -28,6 +28,6 @@ resources:
   domain: ajentik.ai
   group: jwks
   kind: JWKSRotationPolicy
-  path: github.com/yanok/jwks-rotater/api/v1alpha1
+  path: github.com/ajentik/jwks-rotater/api/v1alpha1
   version: v1alpha1
 version: "3"

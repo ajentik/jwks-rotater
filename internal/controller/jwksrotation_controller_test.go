@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	jwksv1alpha1 "github.com/yanok/jwks-rotater/api/v1alpha1"
+	jwksv1alpha1 "github.com/ajentik/jwks-rotater/api/v1alpha1"
 )
 
 var _ = Describe("JWKSRotation Controller", func() {

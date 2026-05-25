@@ -24,7 +24,7 @@ A Kubernetes operator that automates JSON Web Key Set (JWKS) lifecycle managemen
 Install the operator with a single command:
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/yanok/jwks-rotater/main/dist/install.yaml
+kubectl apply -f https://raw.githubusercontent.com/ajentik/jwks-rotater/main/dist/install.yaml
 ```
 
 For detailed instructions including Kustomize-based installation, verification,

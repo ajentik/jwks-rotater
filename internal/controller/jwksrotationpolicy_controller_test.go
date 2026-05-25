@@ -16,7 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	jwksv1alpha1 "github.com/yanok/jwks-rotater/api/v1alpha1"
+	jwksv1alpha1 "github.com/ajentik/jwks-rotater/api/v1alpha1"
 )
 
 var _ = Describe("JWKSRotationPolicy Controller", func() {

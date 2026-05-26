@@ -9,6 +9,8 @@
 
 A Kubernetes operator that automates JSON Web Key Set (JWKS) lifecycle management — key generation, rotation, retention, and distribution — for services that sign or verify JWTs.
 
+> **Note:** All APIs are currently `v1alpha1` and may change in breaking ways before reaching `v1`. Pin to a specific release version in production.
+
 ## Features
 
 - **Automatic key rotation** on a configurable schedule (e.g., every 24h)
@@ -33,6 +35,14 @@ Install the operator with a single command:
 ```sh
 kubectl apply -f https://raw.githubusercontent.com/ajentik/jwks-rotater/main/dist/install.yaml
 ```
+
+### Helm
+
+```sh
+helm install jwks-rotater oci://ghcr.io/ajentik/jwks-rotater/charts/jwks-rotater --version <version>
+```
+
+See [`dist/chart/values.yaml`](dist/chart/values.yaml) for all configuration options.
 
 For detailed instructions including Kustomize-based installation, verification,
 troubleshooting, and building from source, see the [Installation Guide](docs/install.md).

@@ -1,5 +1,0 @@
-# Default reviewers for every PR in this repo.
-# Lines later in the file take precedence; see
-# https://docs.github.com/repositories/managing-your-repositorys-settings-and-security/customizing-your-repository/about-code-owners
-
-*       @milarze
